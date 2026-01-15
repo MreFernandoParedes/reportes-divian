@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Siniestros - Ministerio de Relaciones Exteriores</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+        
+        :root {
+            --mre-rojo: #c1272d;
+            --mre-rojo-oscuro: #a01f24;
+            --mre-gris: #4a4a4a;
+            --mre-gris-claro: #888888;
+            --mre-gris-fondo: #f5f5f5;
+            --blanco: #ffffff;
+            --borde: #e0e0e0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            background: var(--mre-gris-fondo);
+            color: var(--mre-gris);
+            line-height: 1.5;
+        }
+        
+        /* Header con logo del Ministerio */
+        .header {
+            background: linear-gradient(180deg, var(--mre-gris) 0%, var(--mre-gris) 60px, var(--blanco) 60px);
+            padding: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-top {
+            background: var(--mre-gris);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-img {
+            height: 60px;
+            width: auto;
+        }
+        
+        .header-text {
+            color: var(--blanco);
+        }
+        
+        .header-title {
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+        }
+        
+        .header-subtitle {
+            font-size: 11px;
+            font-weight: 300;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+        
+        /* Barra roja con título del reporte */
+        .red-bar {
+            background: var(--mre-rojo);
+            padding: 12px 30px;
+            color: var(--blanco);
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        /* Navegación de pestañas */
+        .tabs-container {
+            background: var(--blanco);
+            padding: 0 30px;
+            border-bottom: 1px solid var(--borde);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: var(--mre-gris);
+            transition: all 0.3s ease;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .tab:hover {
+            background: rgba(193, 39, 45, 0.05);
+            color: var(--mre-rojo);
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--mre-rojo);
+            color: var(--mre-rojo);
+            background: rgba(193, 39, 45, 0.03);
+        }
+        
+        /* Contenedor principal */
+        .container {
+            padding: 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        /* Filtros */
+        .filters {
+            background: var(--blanco);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--mre-gris);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--borde);
+            background: var(--blanco);
+            color: var(--mre-gris);
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--mre-rojo);
+            color: var(--mre-rojo);
+        }
+        
+        .filter-btn.active {
+            background: var(--mre-rojo);
+            border-color: var(--mre-rojo);
+            color: var(--blanco);
+        }
+        
+        /* Páginas */
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Grid de gráficos */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-card {
+            background: var(--blanco);
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .chart-card.full {
+            grid-column: 1 / -1;
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--mre-gris);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--mre-rojo);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+        
+        .chart-container.small {
+            height: 300px;
+        }
+        
+        /* Tabla */
+        .table-container {
+            background: var(--blanco);
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: var(--mre-gris);
+            color: var(--blanco);
+            padding: 15px 20px;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: var(--mre-gris-fondo);
+        }
+        
+        th {
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 500;
+            font-size: 12px;
+            color: var(--mre-gris);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-bottom: 1px solid var(--borde);
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--borde);
+            font-size: 13px;
+        }
+        
+        tbody tr:hover {
+            background: rgba(193, 39, 45, 0.02);
+        }
+        
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .totals-row {
+            background: var(--mre-gris-fondo) !important;
+            font-weight: 700;
+        }
+        
+        /* Resumen de totales */
+        .summary-boxes {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-box {
+            background: var(--blanco);
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--mre-rojo);
+        }
+        
+        .summary-label {
+            font-size: 12px;
+            color: var(--mre-gris-claro);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .summary-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--mre-gris);
+        }
+        
+        /* Scroll horizontal para tablas */
+        .table-scroll {
+            overflow-x: auto;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-boxes {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header-top {
+                padding: 15px;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+            }
+            
+            .tab {
+                padding: 12px 20px;
+                font-size: 13px;
+            }
+            
+            .summary-boxes {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--mre-gris-claro);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-top">
+            <div class="logo-container">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAjgAAAB+CAYAAAAp62uuAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAAEnQAABJ0Ad5mH3gAAEF5SURBVHhe7Z15cFTXlf/nN/Pvb2Yy88vEG7YBu3DJLoxxvCdeiyIuO7ZTxHZigvcBIgyMAozYggGbnRIRiyQQawQMigARsYMixL6aVWAwm82+I0zQAiM4v/re1mndvve9169X03C66lPdutu793Wr77fPOffef7hx4wYJgiAIgiDcCvDjH8wMQRAEQRCEVEUEjiAIgiAItxwicARBEARBuOUQgSMIgiAIwi2HCBxBEARBEG45ROAIgiAIgnDLIQInhajesE5Ica4dO2K9r8x777UVBEEQ4oQInBTi2wfvFlKci6OzrPeVMf85BUEQhOgRgZNCmJOlkHqIwBEEQUgOInBSCHOyFFIPETiCIAjJQQROCmFOlkLqIQJHEAQhOaSMwLl48SJt27bNSp8ydSr179/fSgeHDx+mFeXlqq6Zl4qYk6WQeojAEQRBSA43rcCBcIFAwetR2dn0f/7xHxX3N24cFCx45nQn8fPhhx8G81986aVgPbTLbacS5mQppB4icARBEJLDTSFwIDZMK8u//uhHQcsMRE1GRoYq89ZbbymrDNIhgiBeWjz2mMo324WoQTraRxsQSkhn4YM0vOb2bnbMyVJIPUTgCIIgJIebQuDoYoaBOIGYYSsNxIxZD/kQKSiLNsx8vV1uD69Z2KBNFjiwAEEo3cyWHXOyFFIPETiCIAjJIekCB6ICQgOihcUHRAbEhV4OeRAieA2hwhYaCBWUZ+GDekjD6+J580LaQBrH4LAVCAKG3Vaoy1Yd5DmJpJsJc7IUUg8ROIIgCMkhoQIHokF3/7BrCOkQORAmSGdXk+6mgljhNJRnlxJECKwtaBf12eKCtnUrEPJZyADUQ1m+Fr9mUcQCyBzDzYQ5WQqphwgcQRCE5JBQgQNRAaEB8QBBAWECcQFxgzy8hgWFrTEQKYDFCIsZtMWiJhIXEtpl9xOnscjiuB1uF2lOgcoMyju5yZKJOVkKqYcIHEEQhOSQMIHDq6AgMiBUICyQDqEAwQNRAYHBbihORznT1RRvIGQgrCC0OA4HAsfturyKC+NAP82A6GRhTpZC6iECRxAEITkkTOBw8C9ew3Wku4XYWoNndgv9UKIBQGyx5YitR5zHAi1cwHMyMCdLIfUQgSMIgpAc4iZwMPnD0sEuJxYyepAvhI5u0bkZl2ebfUKf2Z2GMbBQY3ebuforkZiTpZB6iMARBEFIDnEROBxnw0HAujsKwPWD9GSKgXjB/YaowTMLIB4b8vVg50RiTpZC6iECRxAEITnEReCwuwmTvL46ClYOtnrw0m6z7s0OxxHpaexyg8Dh1VzJcFuZk6WQeojAEQRBSA5RCxxM+hAzEDHsdmJMN8+tBLumEDvEGwzy6iuInEQuNTcnSyH1EIEjCIKQHKISOGyZgQWDJ3fet4Y3zrtVYXcbu6XYcqPvu6OfexVPzMlSSD1E4AiCICSHiAUO70+DSRyTOl7zJM/725h1bjVwD3TrDcBriD49oNqsFyvmZCmkHiJwBEEQkkPEAgewkOGAYkzqeP72229d95K5FYGww5j1gGO+N4lwVZmTpZB6iMARBEFIDr4FDqwWvAQc6Bv2YUL/ITfA+yHBfcF9gBWH3XS8HF6PU4p0F2YnzMlSSD1E4AiCICQHXwKH97ThlUNIY1dVKq+Qijf6qeYsAvH3qlWrlNDh08yjxZwshdRDBI4gCEJyCCtwWNzwwZS8gggTOCwTiYg1SVUgYHCPdHHDQdhs/TLrRII5WQqphwgcQRCE5OBb4HBsCT9zQK1ZXmjY/ZjFTbizrvxiTpZC6iECRxAEITmEFTgAIoeDiiFq4J6KdbK+lYG1hgUOi5t4bARoTpZC6iECRxAEITn4EjiAl0JzDI7gDeJxOG4pHuIGmJOlkHqIwBEEQUgOvgUOgMiJ12R9OxCPlVM65mQppB4icARBEJJDRALHieunS+lG5XYr/bajcjtdP15kp8cRc7IUUg8ROIIgCMkhdoFzrJC+Kfw5XdzQjW5Un7Dyb3mqT6ix4x5c/26anR9HzMlSSD1E4AiCICSHmAXOjWuX6UDxa5TVuSnVrmxN1/ePoht1tXa5W426WjVWjBljPzD3NXUvrHJxxJwshdRDBI4gCEJyiF3g1LupDhQ+Se+/egcVDkxLuMvq28rTNO+b9ZS1cS59vGAUPT89k96ZO4QySidQ9uZ5NG1nKW0/fdCqF1cqt6uxYswYu3LVmWXijDlZCqmHCBxBEITkEBeBA2vGxZVtaVLPZoq6vV8mxIozYPUM+rdR79Ddo9sp/jXrbfqnoa/TnaPbqudmee3Vc6Mx79PjU7rQv496V9XZeSZ+gb6Kulo1Rh4vxp6I8ZqYk6WQeojAEQRBSA7xETig9ryKx6le9y5dK/851e3uF5dJH9YaWGYeyP1EiZcnpnSlZnmf0j9ntaFH8tPp+YIe9GDuJ9R43Ecqr8WkTqps09yP1XPLyZ1VvTZzvoiPVQfiZnc/NUaMFWNOVuyROVkKqYcIHEEQhOQQXuBEOnlf2U91G96mzbktaeKAj+38CIAgYesM3FBpEzrQQ+M70F2j2ykrDSw4bMWBtQbPj0/urMrh9aMT0+mZad3oX7J+rV7DwgPXlnkdv9RUV1P6q83V2DBGjNUs48nlb2ISfeZkKaQeInAEQRCSg7fAqT1PdVs70JWtfSMTOtUnqH3avZTeshlNyhph5/sAlhsWLLDG/HPWr6l5frpKu3tMO2qc85ESNc9O66asM+Ct2QOpcc6HymoDYfSjrHdU+X/JaqNEDyw6D0/oSEVfr7KuFw6Im1893pw6PPoAtU+7O+L7gXtYt+UjdU+tfJ+Yk6WQeojAEQRBSA7eAgcT+zfj1SqhkyUv0PVDub4n6In33ElrGjeiTj99KCqRA6ECcfJwfkclZvAa1hoIGgQSQwCZdRjkIdC4y7Jc+lG9hQfckf1e8LVXfRNd3KxtfC+NaHSXVcYRuO0O5ap7h3tYs2+sXSYCzMlSSAznMjOoemPA0ofnU+1+bZWJFhE4giAIySGswMHS58rSV9VqoS0TW9LRpe3sMg6sa9aUFt19B+1oel/EImfo+iIlQn6S/Vv1DIED60v5dzutsuFAnSenZtATU7ooFxXawfOzBd2ssk7o4gZjwZgKH37IKucE7hXuGe4d7mGsy8jNyVKIPxA3+j2v+/57Ovbi01a5aBGBIwiCkBzCCxwsAz9RoibqRx/8v3R83vO+3DPr0prRuDt/QsfubxSxyEHgMITNI/kdlbsJAieWAGFYayBo0Ca7uYBZzsQUNxjLtHvvpo3N06yyFrXn6bviF9U9w73DPbTKRIg5WQrxxRQ3tV/vphNvtLbKxYIIHEEQhOTgS+AgMPby9oFUWfaG2vOl7qtPwoqczS1b0Iy771CiIFKRg9gaLAOHsEEsDUSOWSZSsBIL8Tz3jGmnnhGk7OWmchI3YP79jdTYzPIhVJ9Q8Ta4V5Vlb6l7F6v1BpiTpRA/IGRgreF7DXFz5PE0q1ysiMARBEFIDv4EDnPtMtXtyFBLpAt6PE6XL1XaZerZ9syTtLjRXUFhEInIYWvLM9My1HM8BM4nC7NVW3BPYS8duKou1lyxygE3cQMwJozNrMPgnuSlPxpYKr+zW1yEDWNOlkJ8SJa4ASJwBEEQkkNkAgfUnqe8NmnUq3lTei2tqavIgQjYct89IeLAr8jB7sSw3mDlU/OJAZdS+0XZVjm/FO5ZSc3Gt1dt3jfuw8DKrBznJexe4gZsub+Rq8DBvcA9wb2Z3La574Bsv5iTpRAfrh07GrzHCCpOlLgBInAEQRCSQ+QC58YN6t88jQ43vtdT5EAEQBCsuOdOSySEEznYqyawpLuDEjlYPYXX6UvHebqVTFCWLTfg0YmdglYcrLIyy4cTNzwWJ4Gjixvcm6znn7PKxIo5WQrxAbE3laOz6Ez6J1ZevBGBIwiCkByiEjifP/qImugPN7nPVeTsb/6wKjPjroY4nEhEzsszeqr9biBIGo19Xz1jXxuInU8XZqul4jN2r1DBxxAyDMQR8mDxYWED6w1ieX5W0F3tdOzk8gonbsCsRnerZ4xNrxsibpoE6o568XnrGrFiTpZC6iECRxAEITnEJHDcRM7uHTuC+TO1QGMTL5GD+BgcoAlBAtfS41M6q6MZ7hv3Qb0V5lP1DMtO4LmjekZZ7Fqsl3lpemZQLLWa2duyAvkRN6DwvobX61cFNgt0EjfgZhM42MvlyvIlygXjxvdTJ9KFQZ/7XhYNi4fZhh9wHbMtgGubZU1QFxYXv30E+rhhqTHzw2GOM5JrmyRa4KSnp1OnTp/Rxx9/YuX55f33P1BtALw289F2cXExLVmylHr27GXlx0qi278ZuB3GKAg/NFEJnFb/9qOQid8UOatKS+nsb94JiAIHF5VOOJGD1U9siWmS85GKyWk5KbAK6o7R7ykBhLwnJ6cr606TnI/pntHtqEnux/RznFOVFzjDCoHL2O04WnED5tUHTWNsGKObuAGTX3/NGk+smJNlJOhxJn7ARB5uiXSkbeqYbSHuxSwTDj99BGYdMz8cEEV6G7Fs/JdIgbN48ZJgW9evX6fy8nKrTDiGDRtGNTU1wXaOHj1qlcnLGx/M/+qrr6z8WEl0+zcDGCPeIx5j27a/s8oIghAbUQmcXzZtYk3+usiZXTA1WLZHvdDxQhc516tPWiuP1hzdrVxWHD/DooYtNP0L36aBRW/TQ/WHcMKlxfvdwLIDlxTaCBnHtctUc+Wsb3EDvvz0k2D92QXTXMUNmPObt637FivmZBkJZlt+wMoiWEvMtmJpkzHbgmgwy/ghXB/Nft7KAgdixGxzyJChVjk32rZtRydPnrTa+OCDD0PKjR3bsCP3+vXrrXZiJRHtFxYW0uLFi6l//wFW3g8BxsgCB2MUgSMI8ScqgfOrZg9aEzpgkfNK43uCZYd070Zb6mNXvIDA6PZcM6pe8TLVrm5NdUeLrOsi3mbA6hlK7OAQzUZj2tJjY9+kb8rbqsMvPyloo45mgKDBZoEoa+1+jKXuhyfTtdWt6cryF3yLm7333UN5w4cF22n1YGCsTuIG3MwCB5YXTNo6cP24WWTcJvRwbbrhFMxrChyn9rz66GXJ0cvdDgLn/PnzVF1drV5v3rzZKufGsGHDg3359ttvg69NgdOu3fvKAjFtWgF99llnq51YiXf77dq1C4oJiBwz/4cg3mMUBMEmrgIHsMjhsohVme8Rh6NzoNMjtKi8L7Ur/4oWl/ejmnW/orqTi6zrg/PfFdP5VW9SRvly6lxeRtePzqLrZ8qUcIGAMa1AAG1dW9+G6vYNpxu1F6juwDj6Jj0QDB2OhQ82DcbdAC9xA25mgeM1yWPy1veEARAVZrlI2vSDKXC82nPqo1d5v+XcSDWBc/z4ceWewuu6ujoVl2OWdWLr1q2qzt69e2n16jXBfpkCJ9W4GQWOIAiJJ+4CBxxs3ChY9lJlJa0rKqIT9auq3Dj1fFM6jzOvVm6jN1bsV2SUl9Ha8q5Us6oVXdnSQQkXPOPvxUoIbVXlPitfQdeP1Vt8rl5QAkYJma2BOmpzwnVvUl1Fb7pRpVkA6mro6srX1LXN/uig71sXLw65BxijWU4nVQUOgDXEvLaT1SWSNsMRicBxKg/MMkwk7TqRigLn88/7B9uFe8Ysa9KlS9egCMjJyUmYwPnww4+stFhBm7CImOlMrAIHAcFw35npfom1PoP3IRH3TxBuVaISOL2eecqa0E308uvKy6lm1UqrjE5V0bOUXT4pKG503infQ11WrqRe5SXUeWU5vVP+dUh+iMDRqT5O17/fq56tvHquny2nmqJnrf7ooO+76n/dMmYZk1QWOABl9DqY5M0ykbbphSlY/LRnuqvchEek7ZqkosDB38eOBT73p06dCjvBlpQEzkq7fPmymki9BM4nn3xKBw8eVO1nZWVZbRUUTKcTJ05QcfE89XdGRoZqj4OX0Z81a9ZQenonq66f9kHv3n1oy5Ytyh2HNiFgvvvuOyooKAiu/BoyZIiyRu3bty84lgsXLqg0Jj9/otU2QLD1zp27qLa2VtWDJQz3d/r06a730hw3+n76dGBRA8ael5cXLIsxHjhwwHOMoF+/z2nTpk105UrDrutwP27duo1GjnSvJwhCkgTOouK56rlqwXyrHPh+wGO0srybJWz84ipwfFJX0Y++H9jS6hdAn1GmbHGoq8wsZ5LqAsec1C/PLbLKRNqmF9EIHFOEuQmPSNs1Me+F23X8kEyBM336jGDbgwYNssozEASXLl1S5RYtWqTSvAQOlo9z3qxZtnWorGyFyoPLC5M3xwOZQGx0797Dqo/22eLi1L4eoAsgQvS/J02arMpBjJjXNCkrKwtpG/cC90Bv7+rVqyF19uzZ4xg3o487NzdXiSK9nm49CjdGiChY3sw2TNauXee4lF8QhCQJnIK8vODrysFfhpS7NLClChJ+u3yPJVz84iZwsMwcy8LHbCmh+d9sDKZZZ1DV1VDdlo+V0NL7hr5ymen5+SF1zPGapLrAgUtKr4O9ZMwykbbpRTQCB2dG6XXchEek7ZqkqsDp2DE9OEGuW7fOKs/oq5ZYcMRD4Fy8WKmuf+3aNZo/fz7169dPWUa2bdsWrO8UBO01+X/6aXv6+9//rvIqKiqUdQjpmOTRNsQHW2Uw/tzcPBo/fkLwejt37lRpTEZGt5D22ZIFsEcN58PaVFRUFLyfmzdvsVY+8bhhoYIowhggoBBMDNEE15+fMYLi4r8G+4GA77Fjx6m+ZGZmqvGdPXs2mD9z5v9Y9QVBSJLAKTPiVy72yqTjaffR5RGPRyVuPugzgDK6d7cEDlZZzdm7hgo2LqCsBfm0+mgFrTyyi7I2FVP/1dNp3FfzadTyafTF/Bx1PlXIuOpFzuXhj6u+oY96/tZNm0L+NsdrkuoCx5zUbzYXldO+OWYZJpJ2nTDvRaoIHAD3BtIw4Xbo0MGqA+CqQZmvv/46mBYPgQNgvfniiy9D8mGdgHsG+ZjkTWuI1+Q/aNDgYNs9e/a0ru2E3xiczp27BF1SEDpmPoBVha/ft+8fQ/L0cQMIG7M+4zVG5LE7D+8N3FlO9XlJP9xXHTt2tMoIwu1OUgTO0W+/pQvnzoWkVS96WwUKm/E0fujZ5lXq+2IL6tuuTYjA2XXmMO04fYhyvlpIgxbl04ydZdSzbDJ1LxlN+duX0JdrZ9GoVYWUuSSPFh7YRDWXQ1fiKJGzux/VLmwT2teqKjUGPc0cr0mqCxy4pPQ6N1uQMSxKenknCxMTSbtOpLLAGT68YQNNxIiYdWAR4HxYCTg9HgIHE/iIESOsfDBx4qRgG6YA8pr8R4wYGaz35ZfubjcdvwKHN0qEYHDbCRrp//u//6vKzZkzNyRPFzilpaWWhUfHa4z6ho0IFjfrMpMmTQq2IVYcQbCJSuB89tILVHTHf1iTupvAAXsrKoKvEdg7u3ywJVz80ueDd2hKh9/QsH69QwQO2s7ftoR6TuxPvYd3oZJvNtDQ1TMps3AYDS6dRgW7yih7/Rwa3Kc9ZW+cS9N2lVo7G4O6vYNVH/nv/V9/bZUxx2uSygLHaRWV0/EEer7TvjUmOIrB7aRuvwIH5czYG7f+OfXTrV0vUlngYHJHrIu6R8ca0plly5arPA4u5vR4CBxYjdwmed0SM2bMWKt9t8kf1h4WGHAF9erV22rbxK/A2b074PLctWuXa7/BmTNnVDncI70cjxtuLCeri47XGL/5Zn/9+3XMsx9w13EbcIV5lRWE25GoBE7HVi97CpzTr/3CqrNsfoNvG1zZl00dytda4sUPfT98hyZmdAj+zQIHcTZwSc3eu4aGLp1MGd3epZKv19DYkgk0qLyAsjcVU/qEXjR5YwkVb1pCG/Ztsfp5o/oY1e3PDkkrXbjAKocxmuO+FQQOxI0Z2+JW3uyfH5xcXcAUONjnBtdlzBVTejmvTf7MfrqNxYtUFjgAq3r4GvpOvrBGcADwwoULQ+okWuDg/CVuA5YIs323yR8gFobrotz27TtUMLPb6ia/AodXZFVWVqpYHjf4nsF95CRwvMbNeI2RA779HOHwff1+UOFEmSDcjiRE4OCsJrPOtNzc0LS6GtqzoaclXvzQpV9/mpL+niVwYI0p3L2Scr9aqAKL87YupOHZfWjQJ2/SjHGDqduwz2jVga209OBXNHnHMhWTE3KEQ10t1e1p2D+EWaoFHjJ81pYbqSRwIBDggsJOweY1gZuAMMv5wa/A8QPcaF6WG6d+mmP3Q6oLHATi8mS6atWqYDpWG/G1u3XrHlIn0QJHd41FKnAA4lsuXrwYcv9OnDipLENmWT8CB0HK4VYsmSxfvjykDT/jZtzGCNEZiVUGVh6UPXLkSNiygnC7kRCBs63Vi3S8dSs69eLzdDytGZ1P70ArcxpWajB1FzZR3/ISS8CEI314NuW824oyZi8LCpzDeydTScUqGrtlPuV8tYD6LMhR8ThZZdOpS3Y3mtm9I03atlhZeBbtXU/jygtV/viti4Juqroj0wP75hj9LM8Zq8aAsWBMsN5se+nn1rhTReBEgtc5T3o50+Lihps4iFTgwMrkJrxM9Hq3o8ABFRUBIY8gWrg2kIZJEWmwSpjlb3aBA9AvrIQ6ePBQsC3UM/eV8SNwAFtmYDnBxodeICDZrO9n3IzbGNFXdsFt3LgxbDuwNqHs9u3bw5YVhNuNqAROp9atPAVOSbP7rTRQV2961Tm3vZ8lYMKR2fFjJXDG5OYGBQ4sOIOXTKR+xdk0cvoIJV7m7l1L/ZbmU+aIrrSmIF8tD0dw8cDlk6lwRxl1nDuSvr10miZtWxIIMN4VunIK1B09ao3Da4xMqgscuITCCQi9fDTCQccUOBAwSAMQGLDWmMcz+HFPgVj7eSsIHAQQ83WmTJlCAwYMDP5txsCAVBA4OtnZ2cGVR+fOnQu5rl+Bg40CUQaCz63fXvgZN+M1Rt4cECvNvNrB+8JWJyxp9yorCLcjUQmc7m+9EZXA2TelYeUEU3dxG2WtnBoUL+2z82nIG8/TsF886cn4916lwhFfhAgcWGMWHthMI6YOpfSszjRp+1KaubtciRsAt9W0naU0sHQKdRjTjTotyKb0RaNp54FddP3EfLp+tuGsKebI3NnWOLzGyKSawIGgwOSPydxpxZQTev1ohIOOKXCc2oM7ym98kE6k5U1uBYGDyZB3w8W+KtggDq8Rw+G0UVyqCRwwb16DKxltcDpic1gIYHWTWY/B3jYog4Brt1VUXvgZN+M1RsTTIB35sBaZdRl9w8PJkwObGwqC0EDCBI6TANjZPnTzOGbjmoZYHFPIODHy9WepJLMj5eaMDRE4WCY+YdtitcdN/uoiGpf+HpXOmhQUOPlfLaTxSwsoa2BnGrWmkD5bmqP2yIFlp25bJ6tfYFfnTtY43ManczMLnGgmeSfi2aYfgQMgckxLjpcbDfhp14tbQeCAZcuWBa/FE+P8+QuscuBmFTiwxphtMRx8DDHz0Ucfh+RxvI6XKwf94D75Ob/LxM+4Ga8x5uTkho3DwfgOHz6symBs5ngFQUiywNn48gtWW+Da3uENFpysnBAxM/H9X1oCB9ab0oHd6MsZs0MEDtrCZn8FFWVU9PVqmrR+HmW2a0XDWj9Fue3epC+6/pYGLMmnYeuLaMDqGepZ9QHuqUPjrX6Bil+0tsbhNj4dETiR4VfgAAgavSysOmYZHb0sxJGZHw5zz51UFTg4v0m/HibRbt1Cd/JlblaBs3HjJhUjAxebnt6jR2ZwOTxicszr8maG2FWZA5FhHcFqLi6Dgyx58zxcH6vPTEsO+gYXH3ZR/v3vQ8/S8jNuvR23McLixPFRACfD434hHe8Fxg4rHOdjTyGzfUEQkixwdqY1s9oCdRe3UpfyMiVWOozKo249uishM/Dd16hfQRFl5U2gWV0/oIJObVV6QXpbmj28P729vMISOABBw0XrF9DM3Sto7YYyym7zihI48/dvpMyySSp9wf5NSgyh/PXKbY7uKbDT4RR0t/HpiMCJjEgEDvbSMa04XqIj1vuIvuj1/cT9uPFDChzAv/oBAo/NfOZmFTgbNmwI1oMrKXAo57FgecTh9OrVIFqYceNygvW4b3guL18ZUg6Ch0UOg5gexOewgGL+8IfQlWd+xs14jRHgkE0+koJBELS50gvi5/333U9SF4TbmagETuZv3o1K4ACzLcWVgzR+ZZ4SK78tLKXMzulKyPTu8EFIcDHo9/7blD40i9pNa1h9ZQock9LcLLWKCvE3iMkx81Xdy4HNtUzM/ocbHzOhU0errVgxJ8tI0NvxEg+REM82IxE4wHQbOR0GypgCJZxLS8c8EiIaC5BOIgUOH39w6NAhK4/Jrz9TDZOrudpIp7S0TJXDqqt27UInUP2Mq2nTpll1lywJWLwgQNwmepyrxBM8XDJm+7ySyGy/a9cMWr9+Q/BIBR2cLq5bZHRg/YALCxYcLo/rT548xSoLS86CBQvUWVrmNXBdbAiI+Beznp9xM/oY//znP1v5AMv7cYaY01hhwUFgtVlHEIQGohI4AzK6+hY4C5vdr+C8MyttgXHjaiVNWDVeiZVPxs+gbj17UmZGV+o4YrQlcCB63p9QGJHAQfwNBI6ZztRV9KYb1Ses9DOLFwX7veLB+xTm+NwQgRMZkQocxOKY98dtl2RTDGGFmFnGDfPICi8h5YdEChwIEUycpiAxwS67puvFBIKgQ4eOlvWGgQhwO9sqXF0GcSPt2zu34dU+wBhhBcJxDZmZPcOOh0FANdxZ/fv392yfwZJ6HBKKDRLhzvO6t37HzYQbI4P2INxwIjz6kp6ebpURBMEmoQJnQlqTYFpxs/tpb5N7adfn/az2wNryrkqs9PnoN/Sr5bupzcKvKH3kGEvgQPS8U1QWX4GzvYuVBvaPylJ91sdRkNZYBE4C2oxU4ADTMoOjIMwywEkM+REqZp+AlyvMD4kUOIIgCEIDCRE4EAXj05pQRZN7Q9JnPdSYNr/5utUeYIED9xMLl/Rh2ZbA+Ti3gN6Nt8CBBcchfctv36Hsh5uGjAFWHIxtc9OANccNETiRYYoJP+2ZwcZelhnTEgPcNguEJchpV2evAz39IgJHEAQhOSRE4IBfP97MSgMTH25KlUOHhLZZdYzytBicd4tWqNf8rNNucmDlVDwFzvWTCy0X1fnBX9LUtFBxE25sOjMHOFuqYsGcLCNBb8ePePCD2T+/II7FdCdFI3CA32BjXM/cQ8e8HnA78wrpZp+jQQSOIAhCckiYwOnS4gErTef0G68HdzauO7eaOpWVKXED4dJvdA59kF9IXUZk08R+PajDiNGUPiqHOmaNpXED+1LGhALK7tWNOmTnq/LpE8fTxe0Tg/vdgLn9eyhRA7CCCkvF+W/A5U4f2Ec3qo8HTw9Hn9A3s7+RjA2U5DTsHBsvzMkyEvR2/IqHcJj9iwRTiEQrcExLi5frKZzIcQN14iFugAgcQRCE5BCVwJk9bmxYgVMUJkYF4Gynq7sr6Pt16ZT5csuQjfz49Zg2L1n74IBRbzbsdtz/tea0OruDEjHRcmF5O9UX9Mnsp0nRQ+HHVlYw1bpvsWJOlpGgt+NXPITD3B8mEsxDMuEq0vP9uoPMen5WOcG15Wap0UGZSFZc+UEEjiAIQnJImMCZ60PggNOtW9J3s56l3A8fjZqS3o/TtuznqKjjM1TWNzoOFTxHp1s9ZvXPiRla0LEb361dbd23WDEny0jgE8NhKTHFRSygvUhxinvhtiAoIu2jPja3tp3ANVAHq6xgCQJ4jWDlSNqJhB9a4GBp+MKFCyk3N3Rp9q0OViItWrRI7Qzct29fK18QhFuPqATOzKFDaKYhcFbccyfNv/uOkLRlRpCxE5f6PEanX25Gp15O+0FBH9AXs38m5fVLxZktje5W6GkHG9970wkc4ebghxY4fM6R12aAiQJLubHBnQ6WPCfjmIFwG+slG9yL4uJidUim2949go3TZ8gJLME3694q4B7MnTtXfXZ69ept5QsNRCVwMHn3vfMnIZM6xI0pcDLuDi1jcrzZ/fT9gJZWuhsnf9qYTrd+kC58+ph6PvOLB60ysXCpTws67uF+gnBpf+ePQ9Kcxr2m6f0icARHbleBgz1kePdgJ06dOkULFy5yPToiVm42gZOXNz7YHxw9EW5jQCHwGXLa9NCJTZs23bL3NDc3Tz47Pola4PS++86wE33+Hf+hllSbQoE526aZL5GCMleyn6Nr5T+3uDzyJTr1vPNqp0jBdc6+nWalM6MfbkKzfAg7ETiCG7erwMGuu+Z4ncBxBKNHj7Hqx8rNJnD0k8DXr18vk5QP8BniexYOnAwfr3vat28/5d6cPXsO/e537hs9JosxY8YE7wOOLonXOG9FohY4ve4Knejhppl9V+hEX3TXT9SeOG6b4l0e4m29OZ52H10e/BxdLXtJiZmry1ur59qFvwgKnKuLX1fP3w962aofDVUTnrDSwLz6jQoxJj0dYzZdVKubiItKcEYETuDsKbimQOfOXWjgwC9o1aqGs+Bg6fmv//qD1UYs3GwCBzsiw4ozbVoBffZZZytfsNEFDo7wwGGpbvjd2doPcAfxdf/zP8PvPJ1o8NmBFQefHfz/mPlCA1EJHJD5//7NEgGmJWPgj/9dPTuJnOMPNabvB7jHvMAqU7vwxYCIKW0VEDYLXq1//lVQ4NTWCxwIndqS1sqNZbZltmum6Ti5zBY0uz94TEPf+jEx5pjBqkZ3WvcrHpiTpZB6iMC54WqhmTevJFhm2bJlVn4s3GwCR4gcXeCMGWOfBZYobjaBI/gnaoFTcKe9isqc7OGi4tcQOYUPNYiPM689RKdeCBUbymIz8iUlYGoXvEzXyl6mq0vqxc2i1nR1acByowucq2VvqOeakoB1p3rWL1SMjtm3821b0JW8gGBSFp8vnlNpZjm4qU690LDPzeam99JKLbBYHxMwxwzWN7rLul/xwJwshdQjmQIHK4dw9pKeFqnAwa/FeARs+hE4OEeLJ5J9+76x8p3w279IBQ7OlYo1+Nnr3KpoQJ9wjhiezbxI8XPP3IB1JJo+oE4slpVUFDjR3ivG7+c7HPH47ETSl2jHjfbj+X8TtcAZ9pNQSwZgi42bGIAVZO6zT6nXF9IfoZPPhO45Uz3zlaAAUUJmPkTLK3RtRYPQMQVO7ZLX6oVOQOBcW/EKXSt7xbLkVBcG2q4uak01xa3o6vJAe3oZgD5dSG+uXs995qkQcQPMMZljBsvvucO6X/HAnCyF1CPRAgdfDnPmzKWzZ8+qNvHF/N133wWXhfsROPgiRMDvmTNngl/sV65coY0bN1KPHj2s8n7wI3DwhciByMeOHXONLYimf34EDlYzLV68mI4ePRo8LR0ngx88eIimTJlK7dqF/8LOycmh7dt30Pnz54P92rZtGw0bNjykHMaA09+PHTvueao7RCpOQdf7hHGcOHGC5s+fr0ShWYcpKJiuyhUXz1P3EqeTr1q1mmpqalQ7COxes2aNujdmXZNhw4bRzp07g0G+6Av6NH36dM+JDP2fMeN/1OnnXBf3BKekR7oCKFqBM3HiJPV5x//BgAEDrXyAdPQR78fnn3+u0tauXUt79+6lc+fOBT+7+/fvV2mgoqLCUQTjXu3YYd+rGTNmuMbw4FDXQ4cO0ZEjR5SLDX/Dbcsnzh8+fDj4Y0X/7IwaNYratrXbA7j3f/nLX1Sb5mdnwYIF9Pvfd7LqRNoXnaFDh0Y8btC7dx/avHlz8H+Gv7Pw2fJ7cK0bUQucTv/+r9bEbk72+t9nf/MOXd25U9Ud36snnRplu4Ku5P2MrpW3CogZCJUVr9DVxa3p6rKAeLm67BXlrqqdHxA1QVYEYnQ4vWZ2qxCRA6sM0s+981DDtUa9RFeXBq5l9gN9G98vcNQC+oy+O43J6W8w8c4fW/crHpiTpZB6JFLg4GTq3bvdd2pGMCu+mPHaTeDgtOrTp08H6+BLir8cAb688vPzrXrh8CNwsEqGyyBI1MwH0fYvnMCZO7c42IYbsCq5fVFjEti4cZNVRwdCw29/QPfuPdSka7ajA7GAGCazLvjb38pUma1btyoRVVVVZdUHFy5coB49/tuqDzCRYd8k7iswV8Pt2bPHMY4IkxMmQy6HNvRVUJWVla4i1oloBY6++grC2Zyc8TfSkY8JmfPd7peOLg75XumfR7/3Sv88fPnlIMf3vX37gPVIL1tY+BfHexjLZwft8xjc+9IxLuNGwLT5/6t/1iZPnuI4Pr/EVeCMfKzB5XOxVyYdLC2l/c88SVWLFlr1zxU9bdWvmh6IsYGgQUAxBIgSLPNaUU3RC+rvmqLWyqKjC5yrywJuKo7VgUhSVp+yl4LuqotdQgUVYnGUKCppbcXloG9mfzEGjGXv8mVqbFw253HbHSYCR3AjkQIHS0a5rZ07d6kJoUePTJo0abKaxPRrOQkcWAOwign5+NUKqwNMzZioPv+8v/pVhTx8AUXz65uv7SRwYAWABYbLoLxZBv3jSSdc//CrUK8bTlAcP35CfSmXlpapL/0OHToqc3m/fp+rL2fu14QJtngCX321NVgGFhsICkwyI0aMVJYAXBsWE/6yDtcfXP/vf/+7yscEUFJSQl988aWqh3Fjw0K+HoQCftWbbbDAuXixUrVx7do1ZfWBSISVAf3kNvAL2mki+etf/xrsJ/ZdycgILONPT++kLEv8q95p1VJR0WxVF9fOy8sLCgcExs6ZM8fTSudEtAIHwJLBdfFavy7GgTygW3iGDBmqgnn1/ytY8pAGzM+ofq+WLl1Gf/hDd5WOe4Vret0r/fMAkYXnkydPqmBqsH79huD9CydwzM8O3nP9s/O3v/0tWN/ps6MLnHB9iWTcW7aELmnHjwJYSJGHH2Z/+ENgYQHahjUIabC+meOLhKgFTkb9yqFzHT6lqiWLqa6qivZMzKfLuTlUp5n0Nq9bZ9UFV/Ls1UpXsl5S1pjaBQ0WmqqpLwTFy5XRP6Xq6U8p4aKsOYvrLTfaqqpgIPKigNWnZu6rjrE2iPe5WhYQShBWIf3Ie8LqL9i6qeEXGsaIsW7Pn6DGjnuAe4H6BU3vt+rGA3OyFFKPRAkcTKb8JYMJ2fyVii8bFgDASeAgsBd5+GWHFU5mPsQEfyHhS9/M90IXOAUFBWqiBJhsc3JylRuI8wMTgO320PvXqZNtXkf/vq8/fNXcHyScoMCE7/QLE+CLmNuFNcT8wh00aHCwbYi099+3rTyYYLCxH/8drj+LFi0O3g+4Icx8MHPmzGAbcEua+SxwAIQrfo3r+bjHcLkgH+2YK3LwN1s+MEma4wazZs0K9qFv3z+G5H399dfBe+JUN1J0gQN3GSZTJwYPHmLV1a00GFPXrv+l0nXrzooVKxz76ScGJ9Z7pX8eAP5XP/30P602zLJOAgefHc4PuLDsvsBtxGVgvTT/V3SrildfMG52efoZ9x//2C+Yjs8jp/fqlZjNLqMWOCX9+6mJXU9bXtKwCoKZnp9vpQFT4LAbSbmZIGDKGuJkgi6r+lib6hmv0JUxL9LlQU9S9azWVF3YOrhcnFdVBa089c9oH6JGvx6sQbUlv6TKjMd9CZzZ0wustDXLl4f8fb2qipb06WWViwfmZCmkHokSOPh1ze24xRlAtLAlxxQ4sI7wl1phoT3hMrAkoAzKRhIMqAscNyBc8GvaSdygf/xL0G//dJEXTlCEg60d+EVrfokjjgV5aB9C06zrhFd/8D6xiR/xPOb1GNwnjluAgDHdZyxwcJ2RI0da9QF+IXM/TAHEIgvvi1twMNL5fTEnyoMHD6p0CB23MUSCLnC8WLGi3PF6EJlcnwUwu3RhyYDlw6wD/AgcFhXR3iv98wDBwFYQJ7wETiSfnXPnGj477dqF/q/wd0G4vujjNi1BDMYN66E57uHDRwTHMXjwYNe+xkLUAsdpst/iYK3JGTnCSgOmwGGLSk1xwBoDUVNd0LDqqWraz+qDjgN/18z7ZUjdCx0eDhU4ugurNNBm1ZQX6cr41lQ1pRVdLXuRaooC4ufySH8WnNKFC6y07+r/iXWy+ve30uKBOVkKqUeiBA4CHtEGBIyZp+MWZIwvf+5H//4DrHoM9m7hcuyu8IMfgQMLh5O4AdH0T/9i9hIUfli5MrBPDyw55hcxB3Qj3sTMc8OrP7AmcZ6TO09Ht/SYFigWOJjw3PqlW5/Gjh0XkseTPz4zbvUBgr1RbvXqNSHlli//W7Bv8+b91fcKHDf8WnCGDLEtOEx5eXmwjbVrG+arceNCx67jR+BEeq/WrFnrKnDcLCFOZU2BY352vNrRLT269U4XOOH64nfcHDenjxufVxY+cN+abuV4EFeB843mq2acRA+omvFGiKgANXMCrqnapa8GLTa1i35BNYUNMTfV019Q4gfLyc36ADE3VVPrLT+8R079UvKQ1Vf1y8qxosqMwUHfzP6CbZsaYgSYY9/ZAVijBw+20uKBOVkKqUeiBA585GgDQcRmno6bwEFgLvdj//4Dys3lBPvkwaBBob/4vdAFDlxSiJuB22zEiBFqtQbnzZ+/wKobbf/wq5DrewkKHVil8Mty6tSpyhqECXHlypXqCxh1TYGD8tzuli12bIUbXv1BnAfn9enjfTAoYiK4rGm58yNwsHKM60+ePDkkj61DsG6Y91mH47bw2dOvo1sMuR2IWNMV5pdYYnAYBOJfunQp2CeAeDW3+wP8CJxY75WXaDHxKougXL+fHXzGnT47usAx2zfhFWaRjPt3v2v4EaPHRuEZq7DgVjOtkdEStcBZvsC2ZoDdO3aE/F1dVWWlgWsbPrPECURLQJi0ptoFLFJaK5cVCxOmanIrujL5NbrU7zklarCTse6CquzxLH0/MHC8Awub4DNbecpeVhYdsx/om9nfvRUVaixeY2WmjBtrpcUDc7IUUo9ECRz2/4eLjXETOPome37AL69IJiqvIGP8smdhgi85BAyb9aPpH5a4cn0vQQFgOYL53Jz8TEyBgwmT20Xgr9muG179wRJ4vp5plTHBveR2/vSn0SF5fgROZmamo8CBe0+Pw/DD8uXLretAxOJcKL4GQLvLli13deW4EQ+BA/SgWOAW48SEEzjR3KvS0tKECJwFCxpWvIX7/8zOHh3y2eF2/AocjJtdbn4xxw0QsG0ugjhx4qSKpTLLRkrUAme9trW6Tr6DKbpo2lQrre5YCZ182t5V+Mr4ercUNvkra01X64OFVWDxEriWAmJH3zOH98BR7i1jDxwInfMfpAXy2UIE603ZK3TmjdB9eAD6VHfc/jJdWR/gqLN4nvPS0sljRltp8cCcLIXUI1ECR1+NYObpuAmcGTNmBvsBy4y59b2Jm7/dDS+BA7BaifO3bt1m5cfaPy9BAXFTXr4y2D5iRvDrFtYl9AuB0OgT8kyBAwsOf8lHci6QV39w5hH3pWfPnlZdHf0XO+/fwsQicAD/6oZoRlCueY91wk2m2J9o6dKlwYBUgL1czGB4L+IhcBDLxQHjDJZBOwWGM+EEDoj1XnmJFhOvsrxyzc9nB6srnT47fgUO4FWNCL6PZtwMLLqw7B440BDygb65BUn7JWqBc/Tbb6217mDB7NlW2pHDh1T5kPS6Gvp+oL0XDtxFWNVUM6fegoN9bxa/rlxJLGiwbByrqNQ+Oeq5fjVVSUD0VPYIbNRnAguP2qn457awYtAn9M0c6wVtZRizb3cg7sFkxZIGv3g8MSdLIfVIlMDhFVLYxMvM03ETOKNGNQgQxLuY9WIlnMABMGUjH19sZmBjrP3zEhQQMJzndkQECyBT4ACOq8A+OWaeG179waaMnAd3mVlXB9YIvi8dO4YGycYqcPgzhffFrX6kIJBXX3bttuzeiXgInNWrA2cEQpDA4sTtYVWR2xj9CJxY75WXaDHxKouNJiP57HDZ3//+9yHt+xU4vEdOtON24k9/+lPIdhW6SytSohY44Ji27JQ5f/aso+tmcG97ZVHdnjF0vFnoTsHM2TaPKqHDe9uoZeHLX6Paha3oaml9fI4WdMyWnZqi+ue5ryr3k+62Cgf6gj6Z/XSyQB3X4gZ0dm/fTpcuXrTS44E5WQqpR6IEDuI/uJ2uXTOsfACXAAf7mQIH+9pwfa9VStHiR+CMHt1g+URwo56H/jV8qUfePy9BgR1/+br//d/Ov3q9BA4HWkJIuO0Oa+LVH8RDcF5ZmfPSZQDLE95HlMNeN2a5WAUO9sZBOqyDkbqTvEBb7FKFW8+tbyaxChzsa8P1sUsuXKMcuwbLEqwMZh0we3aDVcRpewIQ673yEi0mXmX1z47bajJgfnZ0ERGJwMG4cT2M27SaxkJxcYP4Cuem9SImgVOxfbuVBhYUFVlp586csffEqauh6qK2ltDQQXzNlamvNZxDxYHDi7Bb8UvKlcUiJyB66t1Q9Uc4wEVltukG+mJabxB7c/5s4BeajpPoAZO0L+l4Y06WQuqRKIEzdmxD3Bd2FTXzsaV8RUXDLsemwIGrhQMlMYlj7xezjVjwI3DgrmD3AZ71VTfoHwc0Is/tl7QbXoICgon75rSBIYJleSJ0EjhwZ3F9BCab9QFEJ+KI+G+v/mCs2HgQeZh4u3d3XqaLVU/6hG3mxypwcOo755mb4/nB7WgLjC/cnjFOxCJw8FlicY+gdnaNYeM7btMtSFxfSm+6ARvKTIzpXnmJFhOvsn4/O7h/+mdHbyMSgRPLuN0+H4CDj9GPaAQjE5PAme8gZACsOJZLSgUmz6dLlZWh6bUXqGryy3T8odDTxk04kBjuKQiXqomB5+rCl1XMDTbzQ/75jx6jS/2eDQoep03+THBt9AF90fuGvqLP5jgwtiOHGjYm0/kyM9NKixfmZCmkHokSOPjC1gNkMWnyZn36Lr88sZgCB+CLnOvD1dW3b9+QZdv48oR7CLv9RmpF8SNwwKJFDQG25rLlWPrnJSiGDm1YWgv3iS6s8IuYV1ABJ4GD+AH9vCKIHFgD0Dec/4S+YJ8QwHW9+gNgzeJ8vK+IReCt+hHLgDZ5EoKLzOnMnlgFjm7hQBks9TZ/pWMcU6ZMUdsU6NarzMyedPHiReX6QSA2p+M9wv3ha7rtz+OELnCwsSG2C3DDtGJCSHFd83iCTZsC1hfgFHCMYFeuCxGEe4BxYDk6T9Kx3CvOcxMtJuHK6vfJ6bODjfc4bszpsxOJwMG48b8Ybtz4bME9ro97w4aN6v/NfD+w+zr/P2ED0B/MRQVXlFMcDihxET/ZgwbZIqeumuq29KELnZxjZ9wwN+/TQSyPufzbBMLmQqdH1LXRB7OvRQX2UniV7mK9gbBbVjLPSo8X5mQppB6JEjgAJnj9rB984ehBndj4i60VTgIH4BA+/nIEaA/iCF/eetvY88Ss64VfgYMJl8sh2NfMj7Z/XoICQmSH5laHuR3X1ne+xSGVeO0kcAD2H+Ht8RlzZY2+C7JXf7hP2DNEr4/yEEl6Gvrzxz86WxViFTgAy8h5AmMw+eCemytf9LgpTFLcLu4D3h8EFXMwPEA8jFu/nNAn7nDox0BgfxWe0J2uCTHK/yewYpoTtO7OAegDv7e6WyvaewXCiZZIyvJnR79XkXx2IhE4IJJxd+vWsBEmzsbjPgYOtT2o3jdOw3sS6944MQkcsGenHW8Daqqrqcwl2NZJONQdPUpn33qCvu/fgip7tKCzbZrRyacfsERJrKBNtI1rXB7Wks688VN1bbM/Tn0Ey+aXWMvFGaeNAOOJOVkKqUciBQ6AtYZ/STLYo2L6dARRtgtaQbApnVmX6d+/v5qMnH68YFM77JocqV8cAoDbwPlMZr4Ob/GPL1mn05qj6Z++EzL2jjHbxC/cJUuWBDceY3CUASZr3gUXX9xuX/iwGiAex5yE8SsZcT76zs96f/785z9bbQG8X9j/x3w/AVavIH7F6UgNBiejoywmD7c+Y7NGnsywXNfMB/iVDgsIYjXMfkD8YcxwkZr1sMKLRaIO2gmcFO1/BRWA9SHcMn5m3759wTFv2xYIpUBdtxga/egCrNgz7xeEIE7Y1q8Bl5e5eSHfqwsX7DhMvlfYVNBs3/w8mPmRlsVnZ8KECZbwAPjs4FgKt3uB9vn/wK19k2jGjf+XdevWh/wIY2DZcXIXR0rMAsdtPxywac0a21pTT0FeXkhe5bAhQRFyokUTZZ25kN5c7Sp8qfej6hmiBOmmaHEDZSszW4S2kdmCzrzajE60bGgH1+Z+oE/jRzlPQrBY7ak/Ed2JkZ8HTiBPFOZkKaQeiRY4TLdu3dWkjF9X5pEKcBn4WZ4L8zsmQGzhj19SuqshGvDL2E9sD76c+bBLM08n0v6hPT9lMJnh3pnLWlE3XJ8ARAdEGNrw2u3ZT38Y9AVtYqzon/meOsH30XRBmEBEsgsjHHj/sOoMbiCc4+SnH7gfWG4Pdx/GobsVkwHGj0k7XF8R64H75dU/tIMfEXgPvMqBSO9VJJ+HSMpG89mJpH2TSMeNfPQr0L+eMcXcmMQscIAVPKyxtnyFq8j5eteuoJXnxE/tU7lNIHzY+rK332N08inbBYU05F3s0YJOvWDnO4Frow+wzkCUmf0EGMPaFQ2H15nA4nNW89UnAnOyFFKPZAkcQRCE2524CJxFxc4b3jGLi4tdRQ7Wu6/JGmmJDi82N72PDje9l9a+m0bnOzwSTMfrNe+m0aEm96oyZj0vSjIzqcrwUTJK3JSvsNKDY6iqoslj7eXl8cacLIXUQwSOIAhCcoiLwAEl2lJLJ2D9wJJrM53J+ekj1PGxB6n7ow9QSTPvFVXT05qo569aPkJrn36QLg9vqdjeogltfywgeCbXl3ED1xjQ/AFF3hPNrf4wcEt5ueFAXpb7pBVPzMlSSD1E4AiCICSHuAkcWDm8BAzAwZRzZjRsqsXo8Td7m9xLMx9qTFmPNFUihEFaUJw81FhZaL5t9gB907I5HW92Px1/qDFVPNlSpSFPF0moq7fFbeuCR4/DYdBXp80MdXZt3Uo7tjQsM0wk5mQppB4icARBEJJD3AQOgMA55RC1bbJx9epg3A5WMB1Ps8+EcgMC6OsHG9PceoFS8dTjVhmIly0P3KfKmnluoA+8mgrCZk2Ze7wNc/jAftqwquEMm0RjTpZC6iECRxAEITnEVeAACBc/Igfs2LKFdrb5VUTxMuMeDgQOF/zsp+r5YPM0q0zhs4EzrsaFcVOZ7HzrTXWIKJa4m301OfTNN7R0XuL2vHHCnCyF1EMEjiAIQnKIu8ABsOQc3LfPSneiZv26oNtofFqTEFeSaYHZdX8janvHj9XrRS88bQkUpvT5QN57je6i/c0fDsk70PheWv3AfQpcY/mD91NRs8bqb/TF7J8TFdu3JV3cAHOyFFIPETiCIAjJISECByAmB4HH1xw249I5/cvXLIHiROHdd1JRn57Uq2VgOfnWJ5yPYDjS7AHa+mTAgjP46SfpaEUFrXvWXQzpoC9m/3SwWmpG/oSwcTmJwpwshdRDBI4gCEJySJjAYbZu2qRibpx2HYXFxBQZJivuuZMGt2hOR3dXqBVNs+78iUrf3zxNiRmzPGJyvm0WcGOhLJ9sPuOzdNryhB2vY+JmxUFMzlyHAOlkYk6WQuohAkcQBCE5JFzgMMePHKGVy5cp6weLHTfrzeb7G9GcRnfSoNavKGHDbYz8+CPae989qsyKFg/TDgcrzr4nWtL6Fg8r9xbKju/8WUg/Vubm0IrXX7NcVwxbcXCu1NKSEsrPHqUOFfUTl5NozMlSSD1E4AiCICSHpAkcHVhVNi5ZQnk/e5a+SGtGmQ80Vs/DnnicxnVOpwPrQw+ZY/o8//OgEIGAmf+EfTjngqceo5UPNgQto47ZDoALDX0ozuxBSzp2oD0ZXamo/ac0/cMPaWZebkIPzYwWc7IUUg8ROIIgCMnhBxE40TL4sUdDxIxToPGil38W8jfqmO2kKuZkKaQeInAEQRCSQ0oJnM6aWwnupznPPGEJnJXPBpaPM4PSHrLaSVXMyVJIPUTgCIIgJIeUEjgV69bR8F+3oXkd2qvYmi8ftV1UAx9Jo+kd2lPO279WrJ0zx2onVTEnSyH1EIEjCIKQHFJK4JjwknEdpJnlbhXMyVJIPUTgCIIgJIeUFjiw6PR++ikVZzPq3nvU68JhQ61ytwrmZCmkHiJwBEEQkkNKC5zbDXOyFFKPc5kZ1vvKmP+cgiAIQvSIwEkhzMlSSD1OtW1jva+M+c8pCIIgRI8InBTCnCyF1EMEjiAIQnIQgZNCmJOlkHqIwBEEQUgOInBShNo9FWpyFFKb81/2s95bQRAEIf4EBU7wlTzkIQ95yEMe8pDHLfIQgSMPechDHvKQhzxuuYcIHHnIQx7ykIc85HHLPUTgyEMe8pCHPOQhj1vu8f8B6Mr3zUrwAaMAAAAASUVORK5CYII=" alt="Escudo del Perú" style="height: 70px; width: auto;">
+                <div class="header-text">
+                    <div class="header-subtitle" style="color: var(--blanco); font-size: 12px; font-weight: 400;">Oficina de Control Patrimonial y Gestión de Bienes en el Exterior</div>
+                </div>
+            </div>
+        </div>
+        <div class="tabs-container">
+            <div class="tabs">
+                <div class="tab active" onclick="showPage(1)">Cantidad de siniestros por conductor y por año</div>
+                <div class="tab" onclick="showPage(2)">Monto deducible por conductor y por año</div>
+                <div class="tab" onclick="showPage(3)">Reporte de Siniestros Pendientes por Sub-Estados</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Filtros -->
+        <div class="filters">
+            <div class="filter-group">
+                <div class="filter-label">Año</div>
+                <div class="filter-buttons" id="yearFilters">
+                    <button class="filter-btn active" onclick="filterYear('all')">Seleccionar todo</button>
+                    <button class="filter-btn active" onclick="filterYear(2022)">2022</button>
+                    <button class="filter-btn active" onclick="filterYear(2023)">2023</button>
+                    <button class="filter-btn active" onclick="filterYear(2024)">2024</button>
+                    <button class="filter-btn active" onclick="filterYear(2025)">2025</button>
+                    <button class="filter-btn active" onclick="filterYear(2026)">2026</button>
+                </div>
+            </div>
+            
+            <div class="filter-group" id="stateFilterGroup" style="display: none;">
+                <div class="filter-label">Estado</div>
+                <div class="filter-buttons" id="stateFilters">
+                    <button class="filter-btn active" onclick="filterState('all')">Seleccionar todo</button>
+                    <button class="filter-btn active" onclick="filterState('Atendido')">Atendido</button>
+                    <button class="filter-btn active" onclick="filterState('Cerrado')">Cerrado</button>
+                    <button class="filter-btn active" onclick="filterState('Pendiente')">Pendiente</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página 1: Cantidad de siniestros -->
+        <div id="page1" class="page active">
+            <div class="summary-boxes">
+                <div class="summary-box">
+                    <div class="summary-label">Total Siniestros</div>
+                    <div class="summary-value" id="total-siniestros">111</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">2022</div>
+                    <div class="summary-value" id="year-2022">20</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">2023</div>
+                    <div class="summary-value" id="year-2023">20</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">2024</div>
+                    <div class="summary-value" id="year-2024">35</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">2025</div>
+                    <div class="summary-value" id="year-2025">35</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Cantidad de Siniestros por Año</div>
+                    <div class="chart-container small">
+                        <canvas id="chartAño"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Cantidad de Siniestros por Conductor</div>
+                    <div class="chart-container small">
+                        <canvas id="chartConductor"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">Detalle por Conductor</div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Conductor</th>
+                                <th style="text-align: right;">2022</th>
+                                <th style="text-align: right;">2023</th>
+                                <th style="text-align: right;">2024</th>
+                                <th style="text-align: right;">2025</th>
+                                <th style="text-align: right;">2026</th>
+                                <th style="text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableConductores">
+                            <tr class="loading"><td colspan="7">Cargando datos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página 2: Monto deducible -->
+        <div id="page2" class="page">
+            <div class="summary-boxes">
+                <div class="summary-box">
+                    <div class="summary-label">Total Deducible</div>
+                    <div class="summary-value" id="total-deducible">$10,235.53</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">2023</div>
+                    <div class="summary-value" id="deducible-2023">$3,034.12</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">2024</div>
+                    <div class="summary-value" id="deducible-2024">$5,100.96</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">2025</div>
+                    <div class="summary-value" id="deducible-2025">$2,100.45</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Suma de Deducible US$ inc IGV por Año</div>
+                    <div class="chart-container small">
+                        <canvas id="chartDeducibleAño"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Suma de Deducible US$ inc IGV por Conductor</div>
+                    <div class="chart-container small">
+                        <canvas id="chartDeducibleConductor"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">Detalle de Deducibles por Conductor</div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Conductor</th>
+                                <th style="text-align: right;">2022</th>
+                                <th style="text-align: right;">2023</th>
+                                <th style="text-align: right;">2024</th>
+                                <th style="text-align: right;">2025</th>
+                                <th style="text-align: right;">2026</th>
+                                <th style="text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableDeducible">
+                            <tr class="loading"><td colspan="7">Cargando datos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página 3: Sub-Estados -->
+        <div id="page3" class="page">
+            <div class="summary-boxes">
+                <div class="summary-box">
+                    <div class="summary-label">Atendido</div>
+                    <div class="summary-value" id="estado-atendido">45</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">Cerrado</div>
+                    <div class="summary-value" id="estado-cerrado">27</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">Pendiente</div>
+                    <div class="summary-value" id="estado-pendiente">39</div>
+                </div>
+                <div class="summary-box">
+                    <div class="summary-label">% Avance Promedio</div>
+                    <div class="summary-value" id="avance-promedio">92%</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <div class="chart-title">Sub Estado Siniestro por Año</div>
+                    <div class="chart-container">
+                        <canvas id="chartSubEstadoAño"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">Distribución por Sub Estado</div>
+                    <div class="chart-container">
+                        <canvas id="chartSubEstado"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">Detalle de Siniestros</div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nro Siniestro</th>
+                                <th>Placa</th>
+                                <th>Conductor</th>
+                                <th>Fecha Ocurrencia</th>
+                                <th>Sub Estado Siniestro</th>
+                                <th>Motivo</th>
+                                <th style="text-align: right;">% Avance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableSiniestros">
+                            <tr class="loading"><td colspan="7">Cargando datos...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let datosOriginales = null;
+        let filtrosActivos = {
+            años: [2022, 2023, 2024, 2025, 2026],
+            estados: ['Atendido', 'Cerrado', 'Pendiente']
+        };
+        let paginaActual = 1;
+
+        // Colores del MRE
+        const coloresMRE = {
+            rojo: '#c1272d',
+            gris: '#4a4a4a',
+            grisClaro: '#888888'
+        };
+
+        // Configuración global de Chart.js
+        Chart.defaults.font.family = 'Roboto, Arial, sans-serif';
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = coloresMRE.gris;
+
+        // Función para mostrar página
+        function showPage(pageNum) {
+            // Ocultar todas las páginas
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            // Mostrar página seleccionada
+            document.getElementById('page' + pageNum).classList.add('active');
+            document.querySelectorAll('.tab')[pageNum - 1].classList.add('active');
+            
+            paginaActual = pageNum;
+            
+            // Mostrar/ocultar filtro de estado solo en página 3
+            document.getElementById('stateFilterGroup').style.display = pageNum === 3 ? 'flex' : 'none';
+            
+            // Actualizar datos
+            if (datosOriginales) {
+                actualizarDatos();
+            }
+        }
+
+        // Función para filtrar por año
+        function filterYear(year) {
+            const btn = event.target;
+            
+            if (year === 'all') {
+                const allActive = btn.classList.contains('active');
+                const yearButtons = document.querySelectorAll('#yearFilters .filter-btn:not(:first-child)');
+                
+                if (allActive) {
+                    filtrosActivos.años = [];
+                    yearButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.remove('active');
+                } else {
+                    filtrosActivos.años = [2022, 2023, 2024, 2025, 2026];
+                    yearButtons.forEach(b => b.classList.add('active'));
+                    btn.classList.add('active');
+                }
+            } else {
+                btn.classList.toggle('active');
+                const index = filtrosActivos.años.indexOf(year);
+                
+                if (index > -1) {
+                    filtrosActivos.años.splice(index, 1);
+                } else {
+                    filtrosActivos.años.push(year);
+                }
+                
+                // Actualizar botón "Seleccionar todo"
+                const allBtn = document.querySelector('#yearFilters .filter-btn:first-child');
+                if (filtrosActivos.años.length === 5) {
+                    allBtn.classList.add('active');
+                } else {
+                    allBtn.classList.remove('active');
+                }
+            }
+            
+            actualizarDatos();
+        }
+
+        // Función para filtrar por estado
+        function filterState(state) {
+            const btn = event.target;
+            
+            if (state === 'all') {
+                const allActive = btn.classList.contains('active');
+                const stateButtons = document.querySelectorAll('#stateFilters .filter-btn:not(:first-child)');
+                
+                if (allActive) {
+                    filtrosActivos.estados = [];
+                    stateButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.remove('active');
+                } else {
+                    filtrosActivos.estados = ['Atendido', 'Cerrado', 'Pendiente'];
+                    stateButtons.forEach(b => b.classList.add('active'));
+                    btn.classList.add('active');
+                }
+            } else {
+                btn.classList.toggle('active');
+                const index = filtrosActivos.estados.indexOf(state);
+                
+                if (index > -1) {
+                    filtrosActivos.estados.splice(index, 1);
+                } else {
+                    filtrosActivos.estados.push(state);
+                }
+                
+                // Actualizar botón "Seleccionar todo"
+                const allBtn = document.querySelector('#stateFilters .filter-btn:first-child');
+                if (filtrosActivos.estados.length === 3) {
+                    allBtn.classList.add('active');
+                } else {
+                    allBtn.classList.remove('active');
+                }
+            }
+            
+            actualizarDatos();
+        }
+
+        // Función para actualizar datos según filtros
+        function actualizarDatos() {
+            if (!datosOriginales) return;
+
+            // Filtrar datos según página actual
+            if (paginaActual === 1) {
+                actualizarPagina1();
+            } else if (paginaActual === 2) {
+                actualizarPagina2();
+            } else if (paginaActual === 3) {
+                actualizarPagina3();
+            }
+        }
+
+        // Cargar datos del JSON
+        // Datos embebidos directamente en el HTML
+        datosOriginales = {"conductores":[{"Conductor":"Servicio de grua","2022.0":0.0,"2023.0":0.0,"2024.0":3.0,"2025.0":2.0,"2026.0":0.0,"Total":5.0},{"Conductor":"Consejera Elizabeth Castro Benavides (ODE Pucallpa)","2022.0":2.0,"2023.0":2.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":4.0},{"Conductor":"Luis Enrique Mejia Estrada","2022.0":0.0,"2023.0":1.0,"2024.0":2.0,"2025.0":1.0,"2026.0":0.0,"Total":4.0},{"Conductor":"Arturo Wiliam Vilca Quispe","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":2.0,"2026.0":0.0,"Total":3.0},{"Conductor":"Luis Alexis Uribe Castedo","2022.0":0.0,"2023.0":0.0,"2024.0":3.0,"2025.0":0.0,"2026.0":0.0,"Total":3.0},{"Conductor":"Luis Febres Donayre","2022.0":1.0,"2023.0":1.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":3.0},{"Conductor":"Daniel Jorge Monteverde Landa","2022.0":2.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":3.0},{"Conductor":"Aleida Lopez Levaggi","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Enrique Cabrera Heredia","2022.0":0.0,"2023.0":1.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Florián Nunja Medina","2022.0":1.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Melani del Pilar Alvitres Sanchez","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Jorge Armando Alberca Palacios","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Conductor del Ministerio de Transporte y Comunicaciones","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Danitza Noriega","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Christian Ernesto Rebaza Bazán","2022.0":0.0,"2023.0":0.0,"2024.0":2.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0}],"todos_conductores":[{"Conductor":"Servicio de grua","2022.0":0.0,"2023.0":0.0,"2024.0":3.0,"2025.0":2.0,"2026.0":0.0,"Total":5.0},{"Conductor":"Consejera Elizabeth Castro Benavides (ODE Pucallpa)","2022.0":2.0,"2023.0":2.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":4.0},{"Conductor":"Luis Enrique Mejia Estrada","2022.0":0.0,"2023.0":1.0,"2024.0":2.0,"2025.0":1.0,"2026.0":0.0,"Total":4.0},{"Conductor":"Arturo Wiliam Vilca Quispe","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":2.0,"2026.0":0.0,"Total":3.0},{"Conductor":"Luis Alexis Uribe Castedo","2022.0":0.0,"2023.0":0.0,"2024.0":3.0,"2025.0":0.0,"2026.0":0.0,"Total":3.0},{"Conductor":"Luis Febres Donayre","2022.0":1.0,"2023.0":1.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":3.0},{"Conductor":"Daniel Jorge Monteverde Landa","2022.0":2.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":3.0},{"Conductor":"Aleida Lopez Levaggi","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Enrique Cabrera Heredia","2022.0":0.0,"2023.0":1.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Florián Nunja Medina","2022.0":1.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Melani del Pilar Alvitres Sanchez","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Jorge Armando Alberca Palacios","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Conductor del Ministerio de Transporte y Comunicaciones","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Danitza Noriega","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Christian Ernesto Rebaza Bazán","2022.0":0.0,"2023.0":0.0,"2024.0":2.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Mayco Cusipaucar Manchego","2022.0":0.0,"2023.0":0.0,"2024.0":2.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Luis Ocas Huaripata (ODE Cajamarca)","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Robbyy Altamirano Villegas","2022.0":0.0,"2023.0":2.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Wiliam Candela Goycochea","2022.0":0.0,"2023.0":2.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Reynaldo Bazan Soto","2022.0":1.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Conductor":"Chumbe Santa Cruz Santos","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Arturo Zuñiga","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Caso reportado por Martin Rojas - vehiculo Genesis asignado el Canciller","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Chofer del M. Defensa - Carlos Valencia(comisión del Canciller)","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Aida Delgado","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Conductor de la Contraloria","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Conductor del MIDIS","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Conductor del Ministerio de Defensa","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Anibar Mayo Ramirez","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Embajador Arturo Chipoco (ODE Piura)","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"David Hurtado (ODE Cusco ) ","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":1.0,"Total":1.0},{"Conductor":"Dora Canepa Campoverde","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Jesús Ayaucan Rojas","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Jesenia del carmen Campos peña","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Jenifer Osterling Dankers","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Jhosimar Ayaucan Landa","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"José Chumbe Santa Cruz","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"José Manuel Gamboa Leyva","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"John Tony Espinoza Cruz","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Jorge Mejia Galdós","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Frías Colina Luis Fernando","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Hosto de la Cruz Miguel Angel","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Jack Cancino Ramos","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Jaime Arturo Assen Basurto","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Javier Centeno Yaguno","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Edgar Jovanny Valverde Rodriguez ","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Flavia Silvana Gomez Victoria","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Frank Lincoln Valverde Gutierrez","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Kevin Juan José  Chavez Quispe - Conductor contratado para APEC","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Klever Morales Vega","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Julian Caceres Salcedo","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Julio Vilchez Luciano","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Juan Quevedo Arteaga","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Juan Jesús Chiri Ochoa","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"José Orlando Saucedo Vergara - Conductor contratado para APEC","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"José Sanchez Iaz","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Ministro Augusto Galarza Cuba (ODE Arequipa)","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Ministro Franklin Miller Rojas Escalante (ODE Tacna)","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Ministro Jorge  Wurst Calle","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Ministro Manuel Jesús Soares Document (ODE Trujillo)","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"MC Eliot Gaviria Valverde (ODE Cajamarca)","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Luis Fernando Ulloa Herrera - Conductor contratado para APEC","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Michael Suarez Montalván (ODE Iquitos)","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Miguel Angel Hostos de la Cruz","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"PARA ELIMINAR","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"ODE Pucallpa","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Motocicleta afectada en uso a favor de la PNP","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Miriam Escalante Abad","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Raquel Romero Burgos ","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Paulino Garcia Quispe","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"PNP Juan Ramirez Cruz","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Paola Alexandra Bastas Quevedo ","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Rogger Elias Mendoza","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Roberto Palacios Ordoñez","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Sofia Rios Martinez (ODE Iquitos)","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Segundo Carmelo Rodriguez Rodriguez","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"TCO2 EP Wilmer Colonia Alfaro","2022.0":1.0,"2023.0":0.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Walter Delgado Acevedo","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Walter Gonzales Rodríguez - Conductor contratado para APEC","2022.0":0.0,"2023.0":0.0,"2024.0":1.0,"2025.0":0.0,"2026.0":0.0,"Total":1.0},{"Conductor":"Yamila Lizeth Rivera Caldero","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0}],"siniestros_año":[{"Año":2022.0,"Cantidad":20},{"Año":2023.0,"Cantidad":20},{"Año":2024.0,"Cantidad":35},{"Año":2025.0,"Cantidad":35},{"Año":2026.0,"Cantidad":1}],"deducible":[{"Conductor":"Mayco Cusipaucar Manchego","2022.0":0.0,"2023.0":0.0,"2024.0":1189.86,"2025.0":0.0,"2026.0":0.0,"Total":1189.86},{"Conductor":"Robbyy Altamirano Villegas","2022.0":0.0,"2023.0":870.44,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":870.44},{"Conductor":"Reynaldo Bazan Soto","2022.0":0.0,"2023.0":657.65,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":657.65},{"Conductor":"Ministro Franklin Miller Rojas Escalante (ODE Tacna)","2022.0":0.0,"2023.0":0.0,"2024.0":656.8824,"2025.0":0.0,"2026.0":0.0,"Total":656.8824},{"Conductor":"Miguel Angel Hostos de la Cruz","2022.0":0.0,"2023.0":0.0,"2024.0":566.01,"2025.0":0.0,"2026.0":0.0,"Total":566.01},{"Conductor":"Ministro Augusto Galarza Cuba (ODE Arequipa)","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":507.45,"2026.0":0.0,"Total":507.45},{"Conductor":"Jack Cancino Ramos","2022.0":0.0,"2023.0":0.0,"2024.0":420.87,"2025.0":0.0,"2026.0":0.0,"Total":420.87},{"Conductor":"Luis Enrique Mejia Estrada","2022.0":0.0,"2023.0":0.0,"2024.0":221.08,"2025.0":177.0,"2026.0":0.0,"Total":398.08000000000004},{"Conductor":"Luis Alexis Uribe Castedo","2022.0":0.0,"2023.0":0.0,"2024.0":381.35,"2025.0":0.0,"2026.0":0.0,"Total":381.35},{"Conductor":"Conductor del Ministerio de Transporte y Comunicaciones","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":354.0,"2026.0":0.0,"Total":354.0},{"Conductor":"Arturo Wiliam Vilca Quispe","2022.0":0.0,"2023.0":0.0,"2024.0":177.0,"2025.0":177.0,"2026.0":0.0,"Total":354.0},{"Conductor":"Chofer del M. Defensa - Carlos Valencia(comisión del Canciller)","2022.0":0.0,"2023.0":0.0,"2024.0":341.6218,"2025.0":0.0,"2026.0":0.0,"Total":341.6218},{"Conductor":"Klever Morales Vega","2022.0":0.0,"2023.0":264.01,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":264.01},{"Conductor":"Motocicleta afectada en uso a favor de la PNP","2022.0":0.0,"2023.0":0.0,"2024.0":261.29,"2025.0":0.0,"2026.0":0.0,"Total":261.29},{"Conductor":"Juan Quevedo Arteaga","2022.0":0.0,"2023.0":180.02,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":180.02}],"todos_deducible":[{"Conductor":"Mayco Cusipaucar Manchego","2022.0":0.0,"2023.0":0.0,"2024.0":1189.86,"2025.0":0.0,"2026.0":0.0,"Total":1189.86},{"Conductor":"Robbyy Altamirano Villegas","2022.0":0.0,"2023.0":870.44,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":870.44},{"Conductor":"Reynaldo Bazan Soto","2022.0":0.0,"2023.0":657.65,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":657.65},{"Conductor":"Ministro Franklin Miller Rojas Escalante (ODE Tacna)","2022.0":0.0,"2023.0":0.0,"2024.0":656.8824,"2025.0":0.0,"2026.0":0.0,"Total":656.8824},{"Conductor":"Miguel Angel Hostos de la Cruz","2022.0":0.0,"2023.0":0.0,"2024.0":566.01,"2025.0":0.0,"2026.0":0.0,"Total":566.01},{"Conductor":"Ministro Augusto Galarza Cuba (ODE Arequipa)","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":507.45,"2026.0":0.0,"Total":507.45},{"Conductor":"Jack Cancino Ramos","2022.0":0.0,"2023.0":0.0,"2024.0":420.87,"2025.0":0.0,"2026.0":0.0,"Total":420.87},{"Conductor":"Luis Enrique Mejia Estrada","2022.0":0.0,"2023.0":0.0,"2024.0":221.08,"2025.0":177.0,"2026.0":0.0,"Total":398.08000000000004},{"Conductor":"Luis Alexis Uribe Castedo","2022.0":0.0,"2023.0":0.0,"2024.0":381.35,"2025.0":0.0,"2026.0":0.0,"Total":381.35},{"Conductor":"Conductor del Ministerio de Transporte y Comunicaciones","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":354.0,"2026.0":0.0,"Total":354.0},{"Conductor":"Arturo Wiliam Vilca Quispe","2022.0":0.0,"2023.0":0.0,"2024.0":177.0,"2025.0":177.0,"2026.0":0.0,"Total":354.0},{"Conductor":"Chofer del M. Defensa - Carlos Valencia(comisión del Canciller)","2022.0":0.0,"2023.0":0.0,"2024.0":341.6218,"2025.0":0.0,"2026.0":0.0,"Total":341.6218},{"Conductor":"Klever Morales Vega","2022.0":0.0,"2023.0":264.01,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":264.01},{"Conductor":"Motocicleta afectada en uso a favor de la PNP","2022.0":0.0,"2023.0":0.0,"2024.0":261.29,"2025.0":0.0,"2026.0":0.0,"Total":261.29},{"Conductor":"Juan Quevedo Arteaga","2022.0":0.0,"2023.0":180.02,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":180.02},{"Conductor":"Juan Jesús Chiri Ochoa","2022.0":0.0,"2023.0":0.0,"2024.0":177.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"José Orlando Saucedo Vergara - Conductor contratado para APEC","2022.0":0.0,"2023.0":0.0,"2024.0":177.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Hosto de la Cruz Miguel Angel","2022.0":0.0,"2023.0":0.0,"2024.0":177.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Florián Nunja Medina","2022.0":0.0,"2023.0":177.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Conductor del Ministerio de Defensa","2022.0":0.0,"2023.0":0.0,"2024.0":177.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Flavia Silvana Gomez Victoria","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":177.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Conductor de la Contraloria","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":177.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Conductor del MIDIS","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":177.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Aleida Lopez Levaggi","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":177.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Anibar Mayo Ramirez","2022.0":0.0,"2023.0":177.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Chumbe Santa Cruz Santos","2022.0":0.0,"2023.0":0.0,"2024.0":177.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Julio Vilchez Luciano","2022.0":0.0,"2023.0":177.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Melani del Pilar Alvitres Sanchez","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":177.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Luis Febres Donayre","2022.0":0.0,"2023.0":177.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Michael Suarez Montalván (ODE Iquitos)","2022.0":0.0,"2023.0":177.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0},{"Conductor":"Ministro Manuel Jesús Soares Document (ODE Trujillo)","2022.0":0.0,"2023.0":177.0,"2024.0":0.0,"2025.0":0.0,"2026.0":0.0,"Total":177.0}],"deducible_año":[{"Año":2022.0,"Deducible en US$ incluido IGV":0.0},{"Año":2023.0,"Deducible en US$ incluido IGV":3034.12},{"Año":2024.0,"Deducible en US$ incluido IGV":5100.9642},{"Año":2025.0,"Deducible en US$ incluido IGV":2100.45},{"Año":2026.0,"Deducible en US$ incluido IGV":0.0}],"subestados":[{"Sub Estado Siniestro":"Anulado","2022.0":0.0,"2023.0":0.0,"2024.0":2.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Sub Estado Siniestro":"Con conformidad USG","2022.0":16.0,"2023.0":10.0,"2024.0":15.0,"2025.0":4.0,"2026.0":0.0,"Total":45.0},{"Sub Estado Siniestro":"Desistimiento","2022.0":4.0,"2023.0":9.0,"2024.0":11.0,"2025.0":3.0,"2026.0":0.0,"Total":27.0},{"Sub Estado Siniestro":"Monto de deducible en verificación","2022.0":0.0,"2023.0":0.0,"2024.0":2.0,"2025.0":0.0,"2026.0":0.0,"Total":2.0},{"Sub Estado Siniestro":"Rechazado","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Sub Estado Siniestro":"Seguimiento de documentos por perdida total","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0},{"Sub Estado Siniestro":"Sin OS para cancelar el deducible","2022.0":0.0,"2023.0":1.0,"2024.0":0.0,"2025.0":2.0,"2026.0":0.0,"Total":3.0},{"Sub Estado Siniestro":"Sin conformidad","2022.0":0.0,"2023.0":0.0,"2024.0":3.0,"2025.0":19.0,"2026.0":1.0,"Total":23.0},{"Sub Estado Siniestro":"Sin informe de ocurrencia","2022.0":0.0,"2023.0":0.0,"2024.0":2.0,"2025.0":4.0,"2026.0":0.0,"Total":6.0},{"Sub Estado Siniestro":"Transacción extrajudicial en trámite","2022.0":0.0,"2023.0":0.0,"2024.0":0.0,"2025.0":1.0,"2026.0":0.0,"Total":1.0}],"estados":["Atendido","Cerrado","Pendiente"],"detalle_siniestros":[{"Nro Siniestro":"100130122006413","Placa":"EGR846","Conductor":"Luis Febres Donayre","Fecha Ocurrencia":"2022-02-28 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122007841","Placa":"EGX271","Conductor":"Reynaldo Bazan Soto","Fecha Ocurrencia":"2022-03-11 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122007849","Placa":"EP1232","Conductor":"PNP Juan Ramirez Cruz","Fecha Ocurrencia":"2022-03-11 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122008598","Placa":"EGS082","Conductor":"Ministro Jorge  Wurst Calle","Fecha Ocurrencia":"2022-03-16 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122012622","Placa":"EGR331","Conductor":"José Chumbe Santa Cruz","Fecha Ocurrencia":"2022-04-22 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122013431","Placa":"EGR352","Conductor":"Florián Nunja Medina","Fecha Ocurrencia":"2022-04-29 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122014610","Placa":"EGS057","Conductor":"Luis Ocas Huaripata (ODE Cajamarca)","Fecha Ocurrencia":"2022-05-09 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122015052","Placa":"EGE477","Conductor":"Paulino Garcia Quispe","Fecha Ocurrencia":"2022-05-12 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122017900","Placa":"EGS074","Conductor":"Rogger Elias Mendoza","Fecha Ocurrencia":"2022-06-06 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122022650","Placa":"EGW076","Conductor":"Consejera Elizabeth Castro Benavides (ODE Pucallpa)","Fecha Ocurrencia":"2022-07-18 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122024652","Placa":"EGW076","Conductor":"Consejera Elizabeth Castro Benavides (ODE Pucallpa)","Fecha Ocurrencia":"2022-08-05 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122026228","Placa":"A2K905","Conductor":"TCO2 EP Wilmer Colonia Alfaro","Fecha Ocurrencia":"2022-08-18 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122032217","Placa":"EGR331","Conductor":"José Sanchez Iaz","Fecha Ocurrencia":"2022-10-07 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122036208","Placa":"EGE476","Conductor":"Segundo Carmelo Rodriguez Rodriguez","Fecha Ocurrencia":"2022-11-10 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122036370","Placa":"EGR352","Conductor":"Daniel Jorge Monteverde Landa","Fecha Ocurrencia":"2022-11-11 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122036416","Placa":"EGR336","Conductor":"Arturo Zuñiga","Fecha Ocurrencia":"2022-11-11 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122037474","Placa":"EGR352","Conductor":"Daniel Jorge Monteverde Landa","Fecha Ocurrencia":"2022-11-21 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122038068","Placa":"EGS038","Conductor":"Edgar Jovanny Valverde Rodriguez ","Fecha Ocurrencia":"2022-11-26 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122038964","Placa":"EGV559","Conductor":"Jaime Arturo Assen Basurto","Fecha Ocurrencia":"2022-12-01 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130122038973","Placa":"EGR827","Conductor":"Jesús Ayaucan Rojas","Fecha Ocurrencia":"2022-12-05 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2022.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130123001904","Placa":"EGR842","Conductor":"José Manuel Gamboa Leyva","Fecha Ocurrencia":"2023-01-11 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"CASO 83648191","Placa":"EGS504","Conductor":"Wiliam Candela Goycochea","Fecha Ocurrencia":"2023-01-12 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130123003193","Placa":"EGR469","Conductor":"Florián Nunja Medina","Fecha Ocurrencia":"2023-01-26 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130123004889","Placa":"EGR827","Conductor":"Reynaldo Bazan Soto","Fecha Ocurrencia":"2023-02-08 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":657.65},{"Nro Siniestro":"100130123009343","Placa":"EGR386","Conductor":"Julio Vilchez Luciano","Fecha Ocurrencia":"2023-03-16 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130123011141","Placa":"EGS057","Conductor":"MC Eliot Gaviria Valverde (ODE Cajamarca)","Fecha Ocurrencia":"2023-03-30 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130123012776","Placa":"EGS082","Conductor":"Ministro Manuel Jesús Soares Document (ODE Trujillo)","Fecha Ocurrencia":"2023-04-11 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130123016479","Placa":"EGR809","Conductor":"Luis Enrique Mejia Estrada","Fecha Ocurrencia":"2023-05-12 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130123017781","Placa":"EGR826","Conductor":"Robbyy Altamirano Villegas","Fecha Ocurrencia":"2023-05-22 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130123018753","Placa":"EGU915","Conductor":"Wiliam Candela Goycochea","Fecha Ocurrencia":"2023-06-01 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130123019150","Placa":"EGS099","Conductor":"Michael Suarez Montalván (ODE Iquitos)","Fecha Ocurrencia":"2023-06-05 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130123021544","Placa":"EGX279","Conductor":"Luis Febres Donayre","Fecha Ocurrencia":"2023-06-27 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130123021874","Placa":"EGR803","Conductor":"Klever Morales Vega","Fecha Ocurrencia":"2023-06-29 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":264.01},{"Nro Siniestro":"100130123025998","Placa":"EGW076","Conductor":"Consejera Elizabeth Castro Benavides (ODE Pucallpa)","Fecha Ocurrencia":"2023-08-07 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130123026581","Placa":"EGR839","Conductor":"Juan Quevedo Arteaga","Fecha Ocurrencia":"2023-08-12 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":180.02},{"Nro Siniestro":"100130123030137","Placa":"EGR826","Conductor":"Robbyy Altamirano Villegas","Fecha Ocurrencia":"2023-09-13 00:00:00","Sub Estado Siniestro":"Sin OS para cancelar el deducible","Motivo":"Sin disponibilidad presupuestal","% Avance":0.85,"Año":2023.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":870.44},{"Nro Siniestro":"100130123030138","Placa":"EGW076","Conductor":"Consejera Elizabeth Castro Benavides (ODE Pucallpa)","Fecha Ocurrencia":"2023-09-13 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130123031045","Placa":"EGX287","Conductor":"Anibar Mayo Ramirez","Fecha Ocurrencia":"2023-09-22 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130123031927","Placa":"EGU847","Conductor":"Enrique Cabrera Heredia","Fecha Ocurrencia":"2023-09-29 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130123036093","Placa":"EGR425","Conductor":"Roberto Palacios Ordoñez","Fecha Ocurrencia":"2023-11-09 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2023.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124001385","Placa":"EGR386","Conductor":"Arturo Wiliam Vilca Quispe","Fecha Ocurrencia":"2024-01-12 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130124002736","Placa":"EGU834","Conductor":"Luis Enrique Mejia Estrada","Fecha Ocurrencia":"2024-01-25 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":221.08},{"Nro Siniestro":"100130124004775","Placa":"EGR808","Conductor":"Walter Delgado Acevedo","Fecha Ocurrencia":"2024-02-13 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124005993","Placa":"EGR835","Conductor":"Jorge Mejia Galdós","Fecha Ocurrencia":"2024-02-23 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124007941","Placa":"EGR351","Conductor":"Mayco Cusipaucar Manchego","Fecha Ocurrencia":"2024-03-13 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124008589","Placa":"(CD26L) D4HBPU374791","Conductor":"PARA ELIMINAR","Fecha Ocurrencia":"2024-03-18 00:00:00","Sub Estado Siniestro":"Anulado","Motivo":"Error de registro","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124009763","Placa":"EGS074","Conductor":"Ministro Franklin Miller Rojas Escalante (ODE Tacna)","Fecha Ocurrencia":"2024-03-29 00:00:00","Sub Estado Siniestro":"Monto de deducible en verificación","Motivo":"Pendiente de parte del asesor de seguros","% Avance":0.85,"Año":2024.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":656.8824},{"Nro Siniestro":"100130124013333","Placa":"EAL108","Conductor":"Chumbe Santa Cruz Santos","Fecha Ocurrencia":"2024-04-30 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130124013651","Placa":"EAI413","Conductor":"Christian Ernesto Rebaza Bazán","Fecha Ocurrencia":"2024-05-03 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124014331","Placa":"EGR819","Conductor":"Servicio de grua","Fecha Ocurrencia":"2024-05-09 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124014557","Placa":"EGW076","Conductor":"Juan Jesús Chiri Ochoa","Fecha Ocurrencia":"2024-05-11 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130124015669-1","Placa":"EGX235","Conductor":"Luis Alexis Uribe Castedo","Fecha Ocurrencia":"2024-05-22 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":381.35},{"Nro Siniestro":"100130124015669-2","Placa":"EGX235","Conductor":"Luis Alexis Uribe Castedo","Fecha Ocurrencia":"2024-05-22 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124015669-3","Placa":"EGX235","Conductor":"Luis Alexis Uribe Castedo","Fecha Ocurrencia":"2024-05-22 00:00:00","Sub Estado Siniestro":"Monto de deducible en verificación","Motivo":"Pendiente de parte de la Cia de seguros","% Avance":0.85,"Año":2024.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124017179","Placa":"EGU847","Conductor":"Enrique Cabrera Heredia","Fecha Ocurrencia":"2024-06-05 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124017822","Placa":"EGR325","Conductor":"John Tony Espinoza Cruz","Fecha Ocurrencia":"2024-06-12 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124020773","Placa":"EGE475","Conductor":"Servicio de grua","Fecha Ocurrencia":"2024-07-09 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124020872","Placa":"EGR326","Conductor":"Luis Febres Donayre","Fecha Ocurrencia":"2024-07-10 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124021689","Placa":"EGX286","Conductor":"Luis Enrique Mejia Estrada","Fecha Ocurrencia":"2024-07-17 00:00:00","Sub Estado Siniestro":"Anulado","Motivo":"Error de registro","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"599930124022001","Placa":"EGW076","Conductor":"ODE Pucallpa","Fecha Ocurrencia":"2024-07-22 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124023526","Placa":"EAL108","Conductor":"Miguel Angel Hostos de la Cruz","Fecha Ocurrencia":"2024-08-08 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":566.01},{"Nro Siniestro":"100130124024936","Placa":"EGR329","Conductor":"Jack Cancino Ramos","Fecha Ocurrencia":"2024-08-22 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":420.87},{"Nro Siniestro":"100130124025475","Placa":"EGR327","Conductor":"Daniel Jorge Monteverde Landa","Fecha Ocurrencia":"2024-08-28 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2024.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124027922","Placa":"EAI413","Conductor":"Christian Ernesto Rebaza Bazán","Fecha Ocurrencia":"2024-09-20 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124029556","Placa":"EGR831","Conductor":"Mayco Cusipaucar Manchego","Fecha Ocurrencia":"2024-10-04 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2024.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":1189.86},{"Nro Siniestro":"100130124031870","Placa":"EGR827","Conductor":"Servicio de grua","Fecha Ocurrencia":"2024-10-21 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124033435","Placa":"EAM486","Conductor":"José Orlando Saucedo Vergara - Conductor contratado para APEC","Fecha Ocurrencia":"2024-11-07 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130124033813","Placa":"EAM498","Conductor":"Luis Fernando Ulloa Herrera - Conductor contratado para APEC","Fecha Ocurrencia":"2024-11-08 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124034367","Placa":"EAM479","Conductor":"Kevin Juan José  Chavez Quispe - Conductor contratado para APEC","Fecha Ocurrencia":"2024-11-17 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124034595","Placa":"EAM484","Conductor":"Walter Gonzales Rodríguez - Conductor contratado para APEC","Fecha Ocurrencia":"2024-11-19 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130124037375","Placa":"EX7568","Conductor":"Motocicleta afectada en uso a favor de la PNP","Fecha Ocurrencia":"2024-11-21 00:00:00","Sub Estado Siniestro":"Sin informe de ocurrencia","Motivo":"Pendiente de parte del conductor","% Avance":0.25,"Año":2024.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":261.29},{"Nro Siniestro":"100130124036556","Placa":"EAL110","Conductor":"Hosto de la Cruz Miguel Angel","Fecha Ocurrencia":"2024-12-08 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130124037598","Placa":"EAL110","Conductor":"Chofer del M. Defensa - Carlos Valencia(comisión del Canciller)","Fecha Ocurrencia":"2024-12-09 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2024.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":341.6218},{"Nro Siniestro":"100130124036915","Placa":"EGR838","Conductor":"Javier Centeno Yaguno","Fecha Ocurrencia":"2024-12-10 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2024.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125000242","Placa":"EAM485","Conductor":"Conductor del Ministerio de Defensa","Fecha Ocurrencia":"2024-12-31 00:00:00","Sub Estado Siniestro":"Sin informe de ocurrencia","Motivo":"Pendiente de parte del conductor","% Avance":0.25,"Año":2024.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130125002313","Placa":"EGR803","Conductor":"Servicio de grua","Fecha Ocurrencia":"2025-01-16 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2025.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125002316","Placa":"EGR831","Conductor":"Servicio de grua","Fecha Ocurrencia":"2025-01-16 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Exonerado de deducible","% Avance":1.0,"Año":2025.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125002200","Placa":"EAM456","Conductor":"Conductor del Ministerio de Transporte y Comunicaciones","Fecha Ocurrencia":"2025-01-21 00:00:00","Sub Estado Siniestro":"Sin informe de ocurrencia","Motivo":"Pendiente de parte del conductor","% Avance":0.25,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130125002875","Placa":"EGX302","Conductor":"Frías Colina Luis Fernando","Fecha Ocurrencia":"2025-01-27 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2025.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125004252","Placa":"EAM520","Conductor":"Conductor de la Contraloria","Fecha Ocurrencia":"2025-02-10 00:00:00","Sub Estado Siniestro":"Sin informe de ocurrencia","Motivo":"Pendiente de parte del conductor","% Avance":0.25,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130125005520","Placa":"EAM480","Conductor":"Conductor del MIDIS","Fecha Ocurrencia":"2025-02-22 00:00:00","Sub Estado Siniestro":"Sin informe de ocurrencia","Motivo":"Pendiente de parte del conductor","% Avance":0.25,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"88351098","Placa":"EAM472","Conductor":"Arturo Wiliam Vilca Quispe","Fecha Ocurrencia":"2025-02-26 00:00:00","Sub Estado Siniestro":"Rechazado","Motivo":"Sin cobertura","% Avance":1.0,"Año":2025.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125006592","Placa":"EAM456","Conductor":"Conductor del Ministerio de Transporte y Comunicaciones","Fecha Ocurrencia":"2025-03-04 00:00:00","Sub Estado Siniestro":"Sin informe de ocurrencia","Motivo":"Pendiente de parte del conductor","% Avance":0.25,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130125008422","Placa":"EAM451","Conductor":"Jenifer Osterling Dankers","Fecha Ocurrencia":"2025-03-20 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125008819","Placa":"EGR350","Conductor":"Arturo Wiliam Vilca Quispe","Fecha Ocurrencia":"2025-03-25 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130125008825","Placa":"EAM464","Conductor":"Aida Delgado","Fecha Ocurrencia":"2025-03-26 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125009110","Placa":"EAM452","Conductor":"Danitza Noriega","Fecha Ocurrencia":"2025-03-27 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125009204","Placa":"EAM452","Conductor":"Danitza Noriega","Fecha Ocurrencia":"2025-03-28 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125012870","Placa":"EAK843","Conductor":"Caso reportado por Martin Rojas - vehiculo Genesis asignado el Canciller","Fecha Ocurrencia":"2025-03-29 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125011639","Placa":"EGR848","Conductor":"Dora Canepa Campoverde","Fecha Ocurrencia":"2025-04-22 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125011794","Placa":"EGX287","Conductor":"Luis Enrique Mejia Estrada","Fecha Ocurrencia":"2025-03-31 00:00:00","Sub Estado Siniestro":"Sin OS para cancelar el deducible","Motivo":"Sin disponibilidad presupuestal","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130125012223","Placa":"EGR329","Conductor":"Miriam Escalante Abad","Fecha Ocurrencia":"2025-04-01 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125012233","Placa":"EAM453","Conductor":"Melani del Pilar Alvitres Sanchez","Fecha Ocurrencia":"2025-04-28 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2025.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130125013944","Placa":"EAM507","Conductor":"Flavia Silvana Gomez Victoria","Fecha Ocurrencia":"2025-04-03 00:00:00","Sub Estado Siniestro":"Con conformidad USG","Motivo":"Indemnizado","% Avance":1.0,"Año":2025.0,"Estado Siniestro":"Atendido","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130125015206","Placa":"EAM463","Conductor":"Jesenia del carmen Campos peña","Fecha Ocurrencia":"2025-04-04 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2025.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125017960","Placa":"EGS058","Conductor":"Ministro Augusto Galarza Cuba (ODE Arequipa)","Fecha Ocurrencia":"2025-06-26 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":507.45},{"Nro Siniestro":"100130125022589","Placa":"EAM474","Conductor":"Paola Alexandra Bastas Quevedo ","Fecha Ocurrencia":"2025-08-12 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125023023","Placa":"EGR426","Conductor":"Raquel Romero Burgos ","Fecha Ocurrencia":"2025-08-19 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125026399","Placa":"EAM507","Conductor":"Melani del Pilar Alvitres Sanchez","Fecha Ocurrencia":"2025-09-18 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Sin repuesto","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125028332","Placa":"EAM517","Conductor":"Aleida Lopez Levaggi","Fecha Ocurrencia":"2025-10-13 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125028743","Placa":"EAL108","Conductor":"Embajador Arturo Chipoco (ODE Piura)","Fecha Ocurrencia":"2025-10-17 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125028795","Placa":"EGR326","Conductor":"Yamila Lizeth Rivera Caldero","Fecha Ocurrencia":"2025-10-17 00:00:00","Sub Estado Siniestro":"Desistimiento","Motivo":"Gasto menor","% Avance":1.0,"Año":2025.0,"Estado Siniestro":"Cerrado","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125028958-1","Placa":"EGR831","Conductor":"Jorge Armando Alberca Palacios","Fecha Ocurrencia":"2025-10-20 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125028958-2","Placa":"EGR831","Conductor":"Jorge Armando Alberca Palacios","Fecha Ocurrencia":"2025-10-20 00:00:00","Sub Estado Siniestro":"Transacción extrajudicial en trámite","Motivo":"Pendiente de parte de la Cia de seguros","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125029355 ","Placa":"EGR326","Conductor":"Frank Lincoln Valverde Gutierrez","Fecha Ocurrencia":"2025-10-23 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Sin repuesto","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125031549","Placa":"EGS057","Conductor":"Luis Ocas Huaripata (ODE Cajamarca)","Fecha Ocurrencia":"2025-11-11 00:00:00","Sub Estado Siniestro":"Seguimiento de documentos por perdida total","Motivo":"Pendiente de parte de la Cia de seguros","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125031620","Placa":"EAL110","Conductor":"Julian Caceres Salcedo","Fecha Ocurrencia":"2025-11-12 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Sin repuesto","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125031929 ","Placa":"EAM517","Conductor":"Aleida Lopez Levaggi","Fecha Ocurrencia":"2025-11-17 00:00:00","Sub Estado Siniestro":"Sin OS para cancelar el deducible","Motivo":"Sin disponibilidad presupuestal","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":177.0},{"Nro Siniestro":"100130125032099","Placa":"EGX241","Conductor":"Jhosimar Ayaucan Landa","Fecha Ocurrencia":"2025-11-18 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130125032996","Placa":"EGS099","Conductor":"Sofia Rios Martinez (ODE Iquitos)","Fecha Ocurrencia":"2025-11-27 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"En reparación","% Avance":0.85,"Año":2025.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":"100130126000123","Placa":"EGY768","Conductor":"David Hurtado (ODE Cusco ) ","Fecha Ocurrencia":"2026-01-07 00:00:00","Sub Estado Siniestro":"Sin conformidad","Motivo":"Pendiente de parte de USG","% Avance":0.85,"Año":2026.0,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":0.0},{"Nro Siniestro":NaN,"Placa":NaN,"Conductor":NaN,"Fecha Ocurrencia":"NaT","Sub Estado Siniestro":NaN,"Motivo":NaN,"% Avance":NaN,"Año":NaN,"Estado Siniestro":"Pendiente","Deducible en US$ incluido IGV":NaN}]};
+        
+        // Función simplificada - datos ya están cargados
+        function cargarDatos() {
+            actualizarDatos();
+        }
+
+        // Actualizar Página 1: Cantidad de siniestros
+        let chartAño, chartConductor;
+        
+        function actualizarPagina1() {
+            // Filtrar conductores por años seleccionados
+            const conductoresFiltrados = datosOriginales.todos_conductores
+                .map(c => {
+                    const nuevo = { Conductor: c.Conductor };
+                    let total = 0;
+                    filtrosActivos.años.forEach(año => {
+                        const clave = año + '.0'; // Convertir 2022 a "2022.0"
+                        const valor = c[clave] || 0;
+                        nuevo[año] = valor;
+                        total += valor;
+                    });
+                    nuevo.Total = total;
+                    return nuevo;
+                })
+                .filter(c => c.Total > 0)
+                .sort((a, b) => b.Total - a.Total);
+
+            // Actualizar resumen
+            const totalSiniestros = conductoresFiltrados.reduce((sum, c) => sum + c.Total, 0);
+            document.getElementById('total-siniestros').textContent = totalSiniestros;
+            
+            // Actualizar solo los años visibles en el resumen
+            const resumenYears = [2022, 2023, 2024, 2025];
+            resumenYears.forEach(año => {
+                const elem = document.getElementById(`year-${año}`);
+                if (elem && filtrosActivos.años.includes(año)) {
+                    const valor = conductoresFiltrados.reduce((sum, c) => sum + (c[año] || 0), 0);
+                    elem.textContent = valor;
+                } else if (elem) {
+                    elem.textContent = '0';
+                }
+            });
+
+            // Actualizar gráfico de barras por año
+            const añosData = filtrosActivos.años.map(año => {
+                return conductoresFiltrados.reduce((sum, c) => sum + (c[año] || 0), 0);
+            });
+
+            if (chartAño) chartAño.destroy();
+            chartAño = new Chart(document.getElementById('chartAño'), {
+                type: 'bar',
+                data: {
+                    labels: filtrosActivos.años.map(a => a.toString()),
+                    datasets: [{
+                        label: 'Cantidad Siniestros',
+                        data: añosData,
+                        backgroundColor: coloresMRE.rojo,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+
+            // Actualizar gráfico horizontal de conductores (top 10)
+            const topConductores = conductoresFiltrados.slice(0, 10);
+            
+            if (chartConductor) chartConductor.destroy();
+            chartConductor = new Chart(document.getElementById('chartConductor'), {
+                type: 'bar',
+                data: {
+                    labels: topConductores.map(c => c.Conductor.substring(0, 30)),
+                    datasets: [{
+                        label: 'Cantidad Siniestros',
+                        data: topConductores.map(c => c.Total),
+                        backgroundColor: coloresMRE.rojo,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+
+            // Actualizar tabla
+            const tbody = document.getElementById('tableConductores');
+            tbody.innerHTML = conductoresFiltrados.map(c => `
+                <tr>
+                    <td>${c.Conductor}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2022) ? Math.round(c[2022] || 0) : '-'}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2023) ? Math.round(c[2023] || 0) : '-'}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2024) ? Math.round(c[2024] || 0) : '-'}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2025) ? Math.round(c[2025] || 0) : '-'}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2026) ? Math.round(c[2026] || 0) : '-'}</td>
+                    <td style="text-align: right;"><strong>${Math.round(c.Total)}</strong></td>
+                </tr>
+            `).join('') + `
+                <tr class="totals-row">
+                    <td><strong>Total</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2022) ? Math.round(conductoresFiltrados.reduce((s,c) => s + (c[2022]||0), 0)) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2023) ? Math.round(conductoresFiltrados.reduce((s,c) => s + (c[2023]||0), 0)) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2024) ? Math.round(conductoresFiltrados.reduce((s,c) => s + (c[2024]||0), 0)) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2025) ? Math.round(conductoresFiltrados.reduce((s,c) => s + (c[2025]||0), 0)) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2026) ? Math.round(conductoresFiltrados.reduce((s,c) => s + (c[2026]||0), 0)) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>${Math.round(totalSiniestros)}</strong></td>
+                </tr>
+            `;
+        }
+
+        // Actualizar Página 2: Monto deducible
+        let chartDeducibleAño, chartDeducibleConductor;
+        
+        function actualizarPagina2() {
+            // Filtrar deducibles por años seleccionados
+            const deduciblesFiltrados = datosOriginales.todos_deducible
+                .map(c => {
+                    const nuevo = { Conductor: c.Conductor };
+                    let total = 0;
+                    filtrosActivos.años.forEach(año => {
+                        const clave = año + '.0'; // Convertir 2022 a "2022.0"
+                        const valor = c[clave] || 0;
+                        nuevo[año] = valor;
+                        total += valor;
+                    });
+                    nuevo.Total = total;
+                    return nuevo;
+                })
+                .filter(c => c.Total > 0)
+                .sort((a, b) => b.Total - a.Total);
+
+            // Actualizar resumen
+            const totalDeducible = deduciblesFiltrados.reduce((sum, c) => sum + c.Total, 0);
+            document.getElementById('total-deducible').textContent = '$' + totalDeducible.toFixed(2);
+            
+            ['2023', '2024', '2025'].forEach(año => {
+                const elem = document.getElementById(`deducible-${año}`);
+                if (elem && filtrosActivos.años.includes(parseInt(año))) {
+                    const valor = deduciblesFiltrados.reduce((sum, c) => sum + (c[año] || 0), 0);
+                    elem.textContent = '$' + valor.toFixed(2);
+                } else if (elem) {
+                    elem.textContent = '$0.00';
+                }
+            });
+
+            // Actualizar gráfico de barras por año
+            const añosData = filtrosActivos.años.map(año => {
+                return deduciblesFiltrados.reduce((sum, c) => sum + (c[año] || 0), 0);
+            });
+
+            if (chartDeducibleAño) chartDeducibleAño.destroy();
+            chartDeducibleAño = new Chart(document.getElementById('chartDeducibleAño'), {
+                type: 'bar',
+                data: {
+                    labels: filtrosActivos.años.map(a => a.toString()),
+                    datasets: [{
+                        label: 'Suma de Deducible US$',
+                        data: añosData,
+                        backgroundColor: coloresMRE.rojo,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => '$' + context.parsed.y.toFixed(2)
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '$' + value.toLocaleString()
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Actualizar gráfico horizontal de conductores (top 10)
+            const topDeducible = deduciblesFiltrados.slice(0, 10);
+            
+            if (chartDeducibleConductor) chartDeducibleConductor.destroy();
+            chartDeducibleConductor = new Chart(document.getElementById('chartDeducibleConductor'), {
+                type: 'bar',
+                data: {
+                    labels: topDeducible.map(c => c.Conductor.substring(0, 30)),
+                    datasets: [{
+                        label: 'Suma de Deducible US$',
+                        data: topDeducible.map(c => c.Total),
+                        backgroundColor: coloresMRE.rojo,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => '$' + context.parsed.x.toFixed(2)
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '$' + value.toLocaleString()
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Actualizar tabla
+            const tbody = document.getElementById('tableDeducible');
+            tbody.innerHTML = deduciblesFiltrados.map(c => `
+                <tr>
+                    <td>${c.Conductor}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2022) ? '$' + ((c[2022] || 0)).toFixed(2) : '-'}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2023) ? '$' + ((c[2023] || 0)).toFixed(2) : '-'}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2024) ? '$' + ((c[2024] || 0)).toFixed(2) : '-'}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2025) ? '$' + ((c[2025] || 0)).toFixed(2) : '-'}</td>
+                    <td style="text-align: right;">${filtrosActivos.años.includes(2026) ? '$' + ((c[2026] || 0)).toFixed(2) : '-'}</td>
+                    <td style="text-align: right;"><strong>$${c.Total.toFixed(2)}</strong></td>
+                </tr>
+            `).join('') + `
+                <tr class="totals-row">
+                    <td><strong>Total</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2022) ? '$' + (deduciblesFiltrados.reduce((s,c) => s + (c[2022]||0), 0)).toFixed(2) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2023) ? '$' + (deduciblesFiltrados.reduce((s,c) => s + (c[2023]||0), 0)).toFixed(2) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2024) ? '$' + (deduciblesFiltrados.reduce((s,c) => s + (c[2024]||0), 0)).toFixed(2) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2025) ? '$' + (deduciblesFiltrados.reduce((s,c) => s + (c[2025]||0), 0)).toFixed(2) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>${filtrosActivos.años.includes(2026) ? '$' + (deduciblesFiltrados.reduce((s,c) => s + (c[2026]||0), 0)).toFixed(2) : '-'}</strong></td>
+                    <td style="text-align: right;"><strong>$${totalDeducible.toFixed(2)}</strong></td>
+                </tr>
+            `;
+        }
+
+        // Actualizar Página 3: Sub-Estados
+        let chartSubEstadoAño, chartSubEstado;
+        
+        function actualizarPagina3() {
+            // Filtrar siniestros por años y estados seleccionados
+            const siniestrosFiltrados = datosOriginales.detalle_siniestros.filter(s => {
+                // s.Año viene como 2022.0, así que lo redondeamos
+                const año = Math.round(s.Año);
+                const añoValido = filtrosActivos.años.includes(año);
+                const estadoValido = filtrosActivos.estados.includes(s['Estado Siniestro']);
+                return añoValido && estadoValido && !isNaN(año);
+            });
+
+            // Calcular resumen por estado
+            const porEstado = {
+                'Atendido': 0,
+                'Cerrado': 0,
+                'Pendiente': 0
+            };
+            
+            siniestrosFiltrados.forEach(s => {
+                if (s['Estado Siniestro'] in porEstado) {
+                    porEstado[s['Estado Siniestro']]++;
+                }
+            });
+
+            document.getElementById('estado-atendido').textContent = porEstado['Atendido'];
+            document.getElementById('estado-cerrado').textContent = porEstado['Cerrado'];
+            document.getElementById('estado-pendiente').textContent = porEstado['Pendiente'];
+
+            // Calcular % avance promedio
+            const avancePromedio = siniestrosFiltrados
+                .filter(s => s['% Avance'] != null && s['% Avance'] !== '')
+                .reduce((sum, s) => sum + parseFloat(s['% Avance'] || 0), 0) / 
+                siniestrosFiltrados.filter(s => s['% Avance'] != null && s['% Avance'] !== '').length;
+            
+            document.getElementById('avance-promedio').textContent = Math.round((avancePromedio || 0) * 100) + '%';
+
+            // Gráfico de barras apiladas por año y sub-estado
+            const subEstadoPorAño = {};
+            const subEstados = [...new Set(siniestrosFiltrados.map(s => s['Sub Estado Siniestro']).filter(Boolean))];
+            
+            filtrosActivos.años.forEach(año => {
+                subEstadoPorAño[año] = {};
+                subEstados.forEach(se => {
+                    subEstadoPorAño[año][se] = 0;
+                });
+            });
+
+            siniestrosFiltrados.forEach(s => {
+                const año = Math.round(s.Año);
+                if (s['Sub Estado Siniestro'] && filtrosActivos.años.includes(año) && !isNaN(año)) {
+                    subEstadoPorAño[año][s['Sub Estado Siniestro']]++;
+                }
+            });
+
+            const coloresSubEstados = [
+                '#c1272d', '#4a4a4a', '#888888', '#d94a50', '#6a6a6a', 
+                '#e07278', '#a8a8a8', '#e89a9e', '#c0c0c0', '#f0c2c5'
+            ];
+
+            const datasets = subEstados.map((se, idx) => ({
+                label: se,
+                data: filtrosActivos.años.map(año => subEstadoPorAño[año][se] || 0),
+                backgroundColor: coloresSubEstados[idx % coloresSubEstados.length],
+                borderRadius: 4
+            }));
+
+            if (chartSubEstadoAño) chartSubEstadoAño.destroy();
+            chartSubEstadoAño = new Chart(document.getElementById('chartSubEstadoAño'), {
+                type: 'bar',
+                data: {
+                    labels: filtrosActivos.años.map(a => a.toString()),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, padding: 10, font: { size: 10 } }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de dona de sub-estados
+            const subEstadoCounts = {};
+            siniestrosFiltrados.forEach(s => {
+                if (s['Sub Estado Siniestro']) {
+                    subEstadoCounts[s['Sub Estado Siniestro']] = (subEstadoCounts[s['Sub Estado Siniestro']] || 0) + 1;
+                }
+            });
+
+            if (chartSubEstado) chartSubEstado.destroy();
+            chartSubEstado = new Chart(document.getElementById('chartSubEstado'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(subEstadoCounts),
+                    datasets: [{
+                        data: Object.values(subEstadoCounts),
+                        backgroundColor: coloresSubEstados,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, padding: 10, font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+
+            // Actualizar tabla
+            const tbody = document.getElementById('tableSiniestros');
+            tbody.innerHTML = siniestrosFiltrados.slice(0, 50).map(s => `
+                <tr>
+                    <td><strong>${s['Nro Siniestro']}</strong></td>
+                    <td>${s.Placa}</td>
+                    <td>${s.Conductor}</td>
+                    <td>${new Date(s['Fecha Ocurrencia']).toLocaleDateString('es-PE')}</td>
+                    <td>${s['Sub Estado Siniestro'] || '-'}</td>
+                    <td>${s.Motivo || '-'}</td>
+                    <td style="text-align: right;">${s['% Avance'] ? Math.round(s['% Avance'] * 100) + '%' : '-'}</td>
+                </tr>
+            `).join('');
+
+            if (siniestrosFiltrados.length > 50) {
+                tbody.innerHTML += `<tr><td colspan="7" style="text-align: center; color: var(--mre-gris-claro); font-style: italic;">Mostrando primeros 50 registros de ${siniestrosFiltrados.length} totales</td></tr>`;
+            }
+        }
+
+        // Cargar datos al iniciar
+        cargarDatos();
+    </script>
+</body>
+</html>
